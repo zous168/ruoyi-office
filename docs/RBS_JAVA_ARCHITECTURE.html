@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RBS 系统 · Java 微服务架构设计说明</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #F0F4F8;
+    color: #1A2B4A;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    width: 1040px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 36px 32px;
+    page-break-after: always;
+    position: relative;
+  }
+  .page-head { display: block; width: 100%; text-align: left; }
+  .page-title { font-size: 22px; font-weight: 700; color: #1A2B4A; margin: 0 0 6px; }
+  .page-subtitle { font-size: 12px; color: #8899AA; margin: 0 0 24px; line-height: 1.5; }
+  .page-design { font-size: 10px; color: #64748B; margin: -18px 0 18px; line-height: 1.5; font-style: italic; }
+
+  .lf-layer { display: flex; align-items: stretch; border-radius: 8px; overflow: hidden; border: 1.5px solid #D0DCE8; margin-bottom: 2px; }
+  .lf-bar { writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; font-weight: 700; color: #fff; padding: 10px 7px; text-align: center; letter-spacing: 0.05em; min-width: 30px; display: flex; align-items: center; justify-content: center; }
+  .lf-body { flex: 1; padding: 10px 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: #FAFCFF; }
+
+  .flow-v { display: flex; flex-direction: column; align-items: center; padding: 2px 0; }
+  .flow-v .fv-line { width: 2.5px; height: 16px; background: #94A3B8; }
+  .flow-v .fv-tip { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #94A3B8; }
+  .flow-v .fv-label { font-size: 8px; color: #64748B; padding: 1px 6px; background: #F1F5F9; border-radius: 3px; white-space: nowrap; }
+  .flow-v.blue .fv-line, .flow-v.blue .fv-tip { background: #2B7DE9; border-top-color: #2B7DE9; }
+  .flow-v.green .fv-line { background: #00B578; }
+  .flow-v.green .fv-tip { border-top-color: #00B578; }
+  .flow-v.orange .fv-line { background: #F59E0B; }
+  .flow-v.orange .fv-tip { border-top-color: #F59E0B; }
+  .flow-v.purple .fv-line { background: #7C3AED; }
+  .flow-v.purple .fv-tip { border-top-color: #7C3AED; }
+
+  .fc-pipeline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 8px; border: 1.5px dashed #CBD5E1; border-radius: 10px; background: #F8FAFC; }
+  .fc-step { border: 1.5px solid #D0DCE8; border-radius: 8px; padding: 7px 11px; text-align: center; background: #fff; min-width: 88px; max-width: 140px; }
+  .fc-step .n-title { font-size: 10px; font-weight: 600; color: #1A2B4A; margin-bottom: 1px; }
+  .fc-step .n-desc { font-size: 8px; color: #7B8FA3; line-height: 1.35; }
+  .fc-step.nb { border-color: #2B7DE9; background: #EFF6FF; }
+  .fc-step.ng { border-color: #00B578; background: #ECFDF5; }
+  .fc-step.no { border-color: #F59E0B; background: #FFFBEB; }
+  .fc-step.np { border-color: #7C3AED; background: #F5F3FF; }
+  .fc-step.nt { border-color: #0EA5E9; background: #F0F9FF; }
+
+  .flow-h { display: flex; align-items: center; flex-shrink: 0; }
+  .flow-h .fh-line { width: 20px; height: 2.5px; background: #94A3B8; }
+  .flow-h .fh-tip { width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 7px solid #94A3B8; }
+  .flow-h .fh-label { font-size: 8px; color: #64748B; padding: 1px 5px; background: #F1F5F9; border-radius: 3px; white-space: nowrap; margin: 0 2px; }
+  .flow-h.blue .fh-line { background: #2B7DE9; }
+  .flow-h.blue .fh-tip { border-left-color: #2B7DE9; }
+  .flow-h.green .fh-line { background: #00B578; }
+  .flow-h.green .fh-tip { border-left-color: #00B578; }
+
+  .gov-unified { border: 2px solid #F43F5E; border-radius: 12px; overflow: hidden; margin-bottom: 14px; background: #fff; }
+  .gov-unified-hub { padding: 8px 12px; background: linear-gradient(135deg, #FEF2F2, #FFF1F2); border-bottom: 1px solid #FECDD3; text-align: center; }
+  .gov-unified-hub-title { font-size: 13px; font-weight: 800; color: #BE123C; margin-bottom: 4px; }
+  .gov-unified-hub-desc { font-size: 9px; color: #64748B; line-height: 1.4; max-width: 920px; margin: 0 auto; }
+  .gov-unified-flow { padding: 12px; background: linear-gradient(180deg, #F0FDF4, #F8FAFC); }
+  .gov-unified-flow-cap { font-size: 9px; font-weight: 800; color: #047857; text-align: center; margin-bottom: 8px; }
+  .gov-flow-panel { display: flex; flex-direction: column; gap: 8px; }
+  .gov-flow-lane { display: flex; align-items: flex-start; gap: 8px; padding: 8px; background: #fff; border: 1px solid #A7F3D0; border-radius: 8px; }
+  .gov-flow-lane-label { flex: 0 0 52px; font-size: 9px; font-weight: 800; color: #fff; background: #059669; padding: 6px 4px; border-radius: 6px; text-align: center; line-height: 1.3; }
+  .gov-flow-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; flex: 1; }
+  .gov-pill { font-size: 9px; font-weight: 600; color: #064E3B; background: #ECFDF5; border: 1px solid #6EE7B7; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .gov-pill.gp-nacos { border-color: #FCA5A5; background: #FEF2F2; color: #991B1B; }
+  .gov-chev { font-size: 9px; color: #059669; font-weight: 800; padding: 0 2px; }
+
+  .page-cover { padding: 44px 36px 36px; display: flex; flex-direction: column; min-height: 680px; }
+  .cover-brand { font-size: 12px; color: #64748B; letter-spacing: 0.04em; margin-bottom: 16px; }
+  .cover-title { font-size: 26px; font-weight: 800; color: #1A2B4A; line-height: 1.3; margin-bottom: 10px; }
+  .cover-meta { font-size: 11px; color: #8899AA; margin-bottom: 22px; }
+  .cover-lead { font-size: 13px; color: #334155; line-height: 1.7; margin-bottom: 20px; }
+  .intro-block { margin-bottom: 16px; }
+  .intro-block h3 { font-size: 12px; font-weight: 700; color: #1E40AF; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #E2E8F0; }
+  .intro-block p, .intro-block ul { font-size: 11.5px; color: #475569; line-height: 1.65; }
+  .intro-block ul { margin: 6px 0 0 1.15em; }
+  .intro-block li { margin-bottom: 5px; }
+  .intro-block a { color: #2563EB; }
+  .doc-toc { margin-top: auto; padding-top: 18px; border-top: 1px solid #E2E8F0; }
+  .doc-toc-title { font-size: 12px; font-weight: 700; color: #1A2B4A; margin-bottom: 10px; }
+  .doc-toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; font-size: 10.5px; color: #64748B; line-height: 1.45; }
+  .doc-toc-grid .doc-toc-full { grid-column: 1 / -1; font-weight: 600; color: #475569; margin-bottom: 4px; }
+  .goals-list { margin: 6px 0 0 1.1em; font-size: 11.5px; color: #475569; line-height: 1.55; }
+  .goals-list li { margin-bottom: 3px; }
+  .goals-note { font-size: 10px; color: #94A3B8; margin-top: 8px; line-height: 1.5; }
+  .intro-block.intro-bg { padding: 10px 12px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; }
+  .intro-block.intro-bg h3 { color: #B45309; border-bottom-color: #FDE68A; }
+  .intro-block.intro-bg .pain-list { margin: 6px 0 0 1.15em; font-size: 11.5px; color: #57534E; line-height: 1.65; }
+  .intro-block.intro-bg .pain-list li { margin-bottom: 6px; }
+  .intro-block.intro-summary { padding: 10px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; }
+  .intro-block.intro-summary h3 { color: #334155; border-bottom-color: #E2E8F0; }
+  .intro-table { width: 100%; border-collapse: collapse; font-size: 10.5px; color: #475569; margin-top: 8px; }
+  .intro-table th, .intro-table td { border: 1px solid #E2E8F0; padding: 5px 8px; text-align: left; vertical-align: top; }
+  .intro-table th { background: #F1F5F9; font-weight: 600; color: #334155; }
+  .intro-table td:first-child { white-space: nowrap; width: 28%; }
+  .svc-count-note { font-size: 10px; color: #64748B; margin-top: 8px; line-height: 1.55; text-align: center; width: 100%; }
+
+  .layer { border: 1.5px solid #D0DCE8; border-radius: 10px; margin-bottom: 14px; overflow: hidden; background: #FAFCFF; }
+  .layer-header { padding: 7px 14px; font-size: 12px; font-weight: 600; color: #fff; }
+  .layer-body { padding: 12px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .layer-body.col { flex-direction: column; align-items: stretch; }
+  .blue .layer-header { background: #2B7DE9; } .blue { border-color: #2B7DE9; }
+  .green .layer-header { background: #00B578; } .green { border-color: #00B578; }
+  .orange .layer-header { background: #F59E0B; } .orange { border-color: #F59E0B; }
+  .purple .layer-header { background: #7C3AED; } .purple { border-color: #7C3AED; }
+  .red .layer-header { background: #EF4444; } .red { border-color: #EF4444; }
+  .teal .layer-header { background: #0EA5E9; } .teal { border-color: #0EA5E9; }
+  .gray .layer-header { background: #64748B; } .gray { border-color: #64748B; }
+  .indigo .layer-header { background: #4F46E5; } .indigo { border-color: #4F46E5; }
+  .cyan .layer-header { background: #06B6D4; } .cyan { border-color: #06B6D4; }
+
+  .node { border: 1.5px solid #D0DCE8; border-radius: 6px; padding: 8px 10px; text-align: center; background: #fff; min-width: 80px; }
+  .node .n-title { font-size: 11px; font-weight: 600; color: #1A2B4A; margin-bottom: 2px; }
+  .node .n-desc { font-size: 9px; color: #7B8FA3; line-height: 1.4; }
+  .node.nb { border-color: #2B7DE9; background: #EFF6FF; }
+  .node.ng { border-color: #00B578; background: #ECFDF5; }
+  .node.no { border-color: #F59E0B; background: #FFFBEB; }
+  .node.np { border-color: #7C3AED; background: #F5F3FF; }
+  .node.nr { border-color: #EF4444; background: #FEF2F2; }
+  .node.nt { border-color: #0EA5E9; background: #F0F9FF; }
+  .node.ni { border-color: #4F46E5; background: #EEF2FF; }
+  .node.nc { border-color: #06B6D4; background: #ECFEFF; }
+  .node.ngr { border-color: #64748B; background: #F8FAFC; }
+
+  .connector { display: flex; justify-content: center; padding: 3px 0; }
+  .connector .arr { width: 2px; height: 18px; background: #2B7DE9; position: relative; }
+  .connector .arr::after { content: ''; position: absolute; bottom: -5px; left: -4px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #2B7DE9; }
+  .connector.green-arr .arr { background: #00B578; }
+  .connector.green-arr .arr::after { border-top-color: #00B578; }
+  .connector.purple-arr .arr { background: #7C3AED; }
+  .connector.purple-arr .arr::after { border-top-color: #7C3AED; }
+  .connector.orange-arr .arr { background: #F59E0B; }
+  .connector.orange-arr .arr::after { border-top-color: #F59E0B; }
+  .connector.gray-arr .arr { background: #94A3B8; }
+  .connector.gray-arr .arr::after { border-top-color: #94A3B8; }
+
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .row.stretch { align-items: stretch; }
+  .flex1 { flex: 1; min-width: 0; }
+  .mb16 { margin-bottom: 10px; }
+  .mb0 { margin-bottom: 0; }
+  .w100 { width: 100%; }
+
+  .inner-layer { border: 1.5px dashed #CBD5E1; border-radius: 6px; padding: 8px 10px; background: #FAFCFF; }
+  .inner-layer .il-title { font-size: 10px; font-weight: 600; color: #64748B; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #E2E8F0; }
+
+  .h-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0; }
+  .h-arrow { width: 28px; height: 2px; background: #2B7DE9; position: relative; flex-shrink: 0; }
+  .h-arrow::after { content: ''; position: absolute; right: -5px; top: -4px; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid #2B7DE9; }
+  .h-arrow.short { width: 16px; }
+  .h-arrow.green { background: #00B578; }
+  .h-arrow.green::after { border-left-color: #00B578; }
+
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 9px; font-weight: 500; margin: 1px; }
+  .tag-b { background: #EFF6FF; color: #2B7DE9; border: 1px solid #BFDBFE; }
+  .tag-g { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+  .tag-o { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+  .tag-p { background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+  /* 服务进程全景：上服务名、下中文 */
+  .svc-panorama { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 8px; }
+  .tag-stack {
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6px 8px; border-radius: 5px; min-width: 88px; text-align: center; line-height: 1.25; gap: 3px;
+  }
+  .tag-stack .tag-svc { font-size: 8px; font-weight: 600; opacity: .92; word-break: break-all; }
+  .tag-stack .tag-cn { font-size: 10px; font-weight: 700; }
+  .tag-b.tag-stack .tag-svc { color: #1d4ed8; }
+  .tag-g.tag-stack .tag-svc { color: #047857; }
+  .tag-o.tag-stack .tag-svc { color: #b45309; }
+  .tag-p.tag-stack .tag-svc { color: #6d28d9; }
+
+  /* 异步任务架构 */
+  .job-unified { border: 2px solid #D97706; border-radius: 12px; overflow: hidden; margin-bottom: 14px; background: #fff; }
+  .job-unified-hub { padding: 8px 12px; background: linear-gradient(135deg, #FFFBEB, #FEF3C7); border-bottom: 1px solid #FDE68A; text-align: center; }
+  .job-unified-hub-title { font-size: 13px; font-weight: 800; color: #B45309; margin-bottom: 4px; }
+  .job-unified-hub-desc { font-size: 9px; color: #64748B; line-height: 1.4; max-width: 920px; margin: 0 auto; }
+  .job-unified-flow { padding: 12px; background: linear-gradient(180deg, #FFFBEB, #F8FAFC); }
+  .job-flow-lane { display: flex; align-items: flex-start; gap: 8px; padding: 8px; background: #fff; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 8px; }
+  .job-flow-lane:last-child { margin-bottom: 0; }
+  .job-flow-lane-label { flex: 0 0 56px; font-size: 9px; font-weight: 800; color: #fff; background: #D97706; padding: 6px 4px; border-radius: 6px; text-align: center; line-height: 1.3; }
+  .job-pill { font-size: 9px; font-weight: 600; color: #92400E; background: #FFFBEB; border: 1px solid #FCD34D; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .job-chev { font-size: 9px; color: #D97706; font-weight: 800; padding: 0 2px; }
+  .job-mode-badge { display: inline-block; font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+  .job-mode-scale { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+  .job-mode-single { background: #EDE9FE; color: #5B21B6; border: 1px solid #C4B5FD; }
+
+  /* 业务域色块 */
+  .dbox { flex: 1; min-width: 140px; border-radius: 6px; border: 1px solid #e2e8f0; overflow: hidden; background: #f8fafc; }
+  .dbox-hd { text-align: center; padding: 6px 8px; color: #fff; font-size: 11px; font-weight: 700; line-height: 1.35; }
+  .dbox-hd small { display: block; font-size: 9px; font-weight: 400; opacity: .85; }
+  .dbox-bd { padding: 8px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .chip { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #fff; }
+  .chip-sm { font-size: 9px; font-weight: 500; color: #64748b; background: #e2e8f0; width: 100%; text-align: center; margin-top: 4px; padding: 3px; border-radius: 3px; }
+  .hd-cust { background: #dc2626; }
+  .hd-opp { background: #d97706; }
+  .hd-sale { background: #1d4ed8; }
+  .hd-del { background: #047857; }
+  .hd-risk { background: #6d28d9; }
+  .hd-fin { background: #0e7073; }
+  .hd-ins { background: #be185d; }
+  .hd-plat { background: #1e40af; }
+  .hd-portal { background: #0f766e; }
+  .ci-cust { background: #ef4444; }
+  .ci-opp { background: #f59e0b; }
+  .ci-sale { background: #3b82f6; }
+  .ci-del { background: #10b981; }
+  .ci-risk { background: #7c3aed; }
+  .ci-fin { background: #0d9488; }
+  .ci-ins { background: #ec4899; }
+  .arr-r { display: flex; align-items: center; font-size: 18px; color: #94a3b8; padding: 0 4px; margin-top: 22px; flex-shrink: 0; }
+
+  .ref-box { padding: 10px 12px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; font-size: 10px; color: #64748B; line-height: 1.6; margin-top: 10px; }
+  .ref-box strong { color: #334155; }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0 auto 20px; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 0. 封面 ===================== -->
+<div class="page page-cover">
+  <div class="cover-brand">RBS · JAVA MICROSERVICES ARCHITECTURE</div>
+  <h1 class="cover-title">RBS 系统 · Java 微服务架构设计说明</h1>
+  <p class="cover-meta">技术栈：Java 17 · Spring Boot 3.5 · Spring Cloud Alibaba · Nacos · Gateway · PostgreSQL · Redis · RabbitMQ · Flowable<br>
+  运行环境：<strong>阿里云</strong>（ECS · Docker 编排 · 托管中间件）· 技术基座：<strong>平台基座</strong> · 业务领域：<strong>销售与服务全链路七大域</strong></p>
+  <p class="cover-lead">
+    本文档描述 RBS 系统 <strong>Java 微服务</strong> 目标架构：整体建立在<strong>阿里云基础设施</strong>之上；平台基座与 RBS 业务域协同，业务按客户、商机、销售、交付、风控、财经、保险等七大业务域拆分，支持单体聚合与独立部署。<br>
+  </p>
+
+  <div class="intro-block intro-bg">
+    <h3>升级前背景（现状痛点）</h3>
+    <p>现行系统在向领域化微服务演进过程中，需优先治理以下结构性问题（亦是本册各章节设计的出发点）：</p>
+    <ul class="pain-list">
+      <li><strong>服务边界混乱</strong>：微服务运行进程多达 <strong>25+</strong>，按功能模块而非业务领域划分，域间职责交叉严重，跨模块调用普遍，难以独立演进与扩容。</li>
+      <li><strong>代码与仓库分散</strong>：项目代码散落在 <strong>70+</strong> 个 Git 仓库，缺少统一工程视图；开发人员难以识别系统全貌，无法高效跟踪跨仓库变更与版本关系。</li>
+      <li><strong>重复代码泛滥</strong>：获取用户、查询客户等基础能力在各服务重复实现，行为不一致、维护成本高。</li>
+      <li><strong>单库表模式混乱</strong>：所有数据挤在<strong>一个数据库</strong>中，库内表与模式（schema）边界不清，<strong>配置数据、运行态数据、业务落盘数据</strong>混杂，难以辨识归属与变更影响，维护与排障成本高。</li>
+      <li><strong>存储过程过重</strong>：大量复杂存储过程长时间占用数据库连接与锁资源，性能与可观测性差，应用层难以治理。</li>
+      <li><strong>任务调度混用</strong>：XXL-Job 与 <code>@Scheduled</code> 等调度注解并存且缺乏统一治理，任务执行不可追踪、不可控、难扩容。</li>
+      <li><strong>工程流程缺失</strong>：缺少独立开发/测试环境与规范流程；开发人员常直连<strong>线上环境</strong>（含正式库）联调，并依赖<strong>手动注释代码</strong>（如定时任务、MQ 消费、审批回调等）规避副作用，易漏提交、难复现，质量与数据安全风险高。</li>
+    </ul>
+  </div>
+
+  <div class="intro-block">
+    <h3>系统定位</h3>
+    <p>面向工程机械/设备 <strong>销售与服务全链路</strong>：获客 → 赢单 → 成交 → 交付。平台能力由基座统一提供；业务域按领域模型拆分为独立 Maven 模块与微服务，支持单体聚合（<code>platform-server</code>）与独立部署（<code>各业务域服务</code>）两种形态。</p>
+  </div>
+
+  <div class="intro-block">
+    <h3>架构范围</h3>
+    <ul>
+      <li><strong>业务域</strong> — 入口/门户、核心链路（获客→交付）、支撑域（风控/财经/保险）、外部集成；OA·HRM 等遗留模块并行（见第12章）</li>
+      <li><strong>数据架构</strong> — cfg / data / log / stats 分库 · data 库 schema 分域（第3章）</li>
+      <li><strong>工程视图</strong> — 总体/部署/治理/异步任务/分层/安全/缓存/CI/CD/可观测性</li>
+      <li><strong>异步任务</strong> — Job 定义中心、API / XXL-Job 双通道发布、Worker 并行与单实例</li>
+      <li><strong>平台基座</strong> — 提供 gateway、system（含 infra）、bpm、framework 等平台能力</li>
+      <li><strong>分析与报表</strong> — DataEase BI（只读副本），不纳入 Java 微服务进程</li>
+      <li><strong>阿里云基础设施</strong> — ECS/SLB/CDN · RDS PostgreSQL · 云 Redis · 消息队列 · OSS · 日志与监控旁路</li>
+    </ul>
+  </div>
+
+  <div class="intro-block">
+    <h3>设计目标（摘要）</h3>
+    <ul class="goals-list">
+      <li><strong>边界清晰</strong>：一域一服务；跨域仅 <code>*-api</code> / Export 契约，禁止依赖他域 server</li>
+      <li><strong>可水平扩展</strong>：无状态 API + Gateway 负载；MQ 事件解耦；Job Worker 池横向扩容</li>
+      <li><strong>任务统一</strong>：Job 定义集中治理；API 与 XXL-Job 共用 jobCode；Worker 支持并行 / 单实例</li>
+      <li><strong>可演进</strong>：分阶段上线业务域；基座保持稳定</li>
+      <li><strong>安全统一</strong>：企微 SSO → JWT；公司级 / BU 级数据权限</li>
+      <li><strong>能力复用</strong>：用户/客户/组织等由基座或归属域 <strong>唯一实现</strong>，他域仅依赖 Export / *-api</li>
+      <li><strong>数据分库分域</strong>：<strong>cfg / data / log / stats</strong> 四库职责分离；<code>data</code> 库内以 <strong>schema 对应业务领域</strong>（见第3章）</li>
+      <li><strong>数据下沉</strong>：复杂存储过程分阶段下线，逻辑迁至应用层与 Job；报表走 BI 只读副本</li>
+      <li><strong>调度红线</strong>：业务服务禁止 <code>@Scheduled</code>；任务必须登记 jobCode，经 API 或 XXL-Job 发布</li>
+      <li><strong>工程规范</strong>：dev / test / pre / prod 环境隔离，<strong>禁止非生产连接线上库</strong>；用配置/开关替代手注释代码规避任务与消费</li>
+      <li><strong>工程收敛</strong>：<strong>70+</strong> 仓库向 RBS Monorepo + 域模块归集；<strong>25+</strong> 进程收敛至约 <strong>12</strong> 个可运维单元（见第6章）</li>
+      <li><strong>云上部署</strong>：生产运行于阿里云（ECS · Docker Compose · SLB/CDN · RDS · 云 Redis · OSS）</li>
+    </ul>
+  </div>
+
+  <div class="intro-block intro-summary">
+    <h3>升级对策对照（痛点 → 目标）</h3>
+    <table class="intro-table">
+      <thead><tr><th>升级前痛点</th><th>升级后对策（本册）</th></tr></thead>
+      <tbody>
+        <tr><td>25+ 进程、边界乱</td><td>七大域 + 一域一服务；第6章进程全景；跨域 Export（第4章）</td></tr>
+        <tr><td>70+ 仓库、难掌握全貌</td><td>RBS Monorepo + 域模块；第11章统一构建发布；本册章节索引</td></tr>
+        <tr><td>用户/客户重复实现</td><td>Export 契约 + system/客户域唯一实现（第4章）</td></tr>
+        <tr><td>单库表模式混乱</td><td>cfg/data/log/stats 四库 + data 库按域 schema；配置/运行/落盘分责（第3章）</td></tr>
+        <tr><td>存储过程过重</td><td>逻辑下沉应用层/Job；PG + 分阶段下线 SP；BI 只读（第2章）</td></tr>
+        <tr><td>XXL-Job 与注解混用</td><td>Job 定义中心 + jobCode；禁用业务 @Scheduled（第5章）</td></tr>
+        <tr><td>连线上环境、手注释代码</td><td>dev/test 独立环境；禁止连生产；配置/特性开关替代注释；第11章门禁</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="doc-toc">
+    <div class="doc-toc-title">📑 本册章节索引</div>
+    <div class="doc-toc-grid">
+      <span class="doc-toc-full">业务与协作</span>
+      <span>1. 总体架构图</span>
+      <span>2. 业务领域架构图</span>
+      <span>3. 数据架构图</span>
+      <span>4. 跨域协作与 Export API</span>
+      <span>5. 异步任务与 Job Worker</span>
+      <span class="doc-toc-full">工程与运维</span>
+      <span>6. 微服务治理架构</span>
+      <span>7. 分层架构图</span>
+      <span>8. 部署架构图</span>
+      <span>9. 安全架构图</span>
+      <span>10. 缓存架构图</span>
+      <span>11. CI/CD 发布流程</span>
+      <span>12. 可观测性架构</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 1. 总体架构图 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 总体架构图</div>
+    <div class="page-subtitle">客户端 → 阿里云边缘 → Gateway → RBS 业务域 + 平台基座 → 托管中间件与数据层</div>
+    <div class="page-design">设计意图：自上而下展示访问路径；服务层拆为 <strong>平台基座</strong> 与 <strong>RBS 业务域</strong> 两条泳道。</div>
+  </header>
+
+  <div class="layer blue mb16">
+    <div class="layer-header">🖥️ 客户端层（入口层）</div>
+    <div class="layer-body lb-col-stretch" style="flex-direction:column;align-items:stretch;">
+      <div class="inner-layer">
+        <div class="il-title">主动访问渠道 · 多端统一登录</div>
+        <div class="row gap8">
+          <div class="node nb flex1"><div class="n-title">Web 管理端</div><div class="n-desc">Vue3 + Vben</div></div>
+          <div class="node nb flex1"><div class="n-title">小程序</div><div class="n-desc">uni-app</div></div>
+          <div class="node nb flex1"><div class="n-title">App</div><div class="n-desc">移动端</div></div>
+          <div class="node nb flex1"><div class="n-title">企业微信</div><div class="n-desc">OAuth2 SSO</div></div>
+        </div>
+      </div>
+      <div class="inner-layer">
+        <div class="il-title">系统主动触达</div>
+        <div class="row">
+          <div class="node nt flex1"><div class="n-title">企微消息</div><div class="n-desc">审批待办 · 风控预警</div></div>
+          <div class="node nt flex1"><div class="n-title">短信 / App 推送</div><div class="n-desc">到期 · 回款逾期</div></div>
+          <div class="node nt flex1"><div class="n-title">站内信</div><div class="n-desc">system 消息中心</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector orange-arr"><div class="arr"></div></div>
+
+  <div class="layer orange mb16">
+    <div class="layer-header">🌐 边缘网关层（阿里云）</div>
+    <div class="layer-body">
+      <div class="node no"><div class="n-title">阿里云 CDN</div><div class="n-desc">静态资源 · 回源 OSS</div></div>
+      <div class="node no"><div class="n-title">SLB / ALB</div><div class="n-desc">HTTPS · 负载均衡 · → Gateway</div></div>
+      <div class="node no"><div class="n-title">gateway-server</div><div class="n-desc">路由 · 鉴权透传 · 限流 · Swagger/OpenAPI 聚合（生产仅内网）</div></div>
+    </div>
+  </div>
+
+  <div class="connector green-arr"><div class="arr"></div></div>
+
+  <div class="layer green mb16">
+    <div class="layer-header">⚙️ 服务层</div>
+    <div class="layer-body col" style="gap:12px;">
+      <div class="inner-layer" style="border-color:#10B981;background:#F0FDF9;">
+        <div class="il-title" style="color:#059669;">RBS 业务域微服务（目标）</div>
+        <div class="row">
+          <div class="node ng"><div class="n-title">客户域</div></div>
+          <div class="node ng"><div class="n-title">商机域</div></div>
+          <div class="node ng"><div class="n-title">销售域</div></div>
+          <div class="node ng"><div class="n-title">交付域</div></div>
+          <div class="node ng"><div class="n-title">风控域</div></div>
+          <div class="node ng"><div class="n-title">财经域</div></div>
+          <div class="node ng"><div class="n-title">保险域</div></div>
+        </div>
+      </div>
+      <div class="inner-layer" style="border-color:#4F46E5;background:#EEF2FF;">
+        <div class="il-title" style="color:#4338CA;">平台基座（已实现）</div>
+        <div class="row">
+          <div class="node ni"><div class="n-title">system-server</div><div class="n-desc">系统与基础设施合一（权限/字典/消息 · 文件/日志 · Job 定义）</div></div>
+          <div class="node ni"><div class="n-title">bpm-server</div><div class="n-desc">工作流与审批（Flowable · 流程定义/实例/任务回调）</div></div>
+          <div class="node ni"><div class="n-title">pay-server</div><div class="n-desc">支付渠道对接（按需独立进程；业务收款/核销归财经域）</div></div>
+        </div>
+      </div>
+      <div class="node nc w100"><div class="n-title">portal/BFF（可选）</div><div class="n-desc">角色工作台聚合 · 主页缓存 BFF · 禁止直连他域 DB</div></div>
+    </div>
+  </div>
+
+  <div class="connector purple-arr"><div class="arr"></div></div>
+
+  <div class="layer purple mb16">
+    <div class="layer-header">🔄 异步与任务基础设施</div>
+    <div class="layer-body col" style="align-items:stretch;gap:10px;">
+      <div class="row w100">
+        <div class="node np flex1"><div class="n-title">云 Redis</div><div class="n-desc">缓存 · 分布式锁</div></div>
+        <div class="node np flex1"><div class="n-title">RabbitMQ</div><div class="n-desc">领域事件 · Job 队列</div></div>
+        <div class="node np flex1"><div class="n-title">WebSocket</div><div class="n-desc">站内实时推送 · system-server</div></div>
+      </div>
+      <div class="inner-layer" style="border-color:#D97706;background:#FFFBEB;">
+        <div class="il-title" style="color:#B45309;">异步任务（Job 体系 · 详见第5章）</div>
+        <div class="row w100">
+          <div class="node no flex1"><div class="n-title">Job 定义中心</div><div class="n-desc">jobCode · 并发策略</div></div>
+          <div class="node no flex1"><div class="n-title">xxl-job-admin</div><div class="n-desc">Cron · 调度发布</div></div>
+          <div class="node no flex1"><div class="n-title">rbs-job-worker-server</div><div class="n-desc">任务执行 · 可扩容</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector gray-arr"><div class="arr"></div></div>
+
+  <div class="layer gray mb0">
+    <div class="layer-header">💾 数据与治理</div>
+    <div class="layer-body">
+      <div class="node ngr"><div class="n-title">RDS PostgreSQL</div><div class="n-desc">rbs_cfg / rbs_data / rbs_log / rbs_stats · 主从/只读副本</div></div>
+      <div class="node ngr"><div class="n-title">Nacos（自建或 MSE）</div><div class="n-desc">注册发现 · 配置中心</div></div>
+      <div class="node ngr"><div class="n-title">阿里云 OSS</div><div class="n-desc">文件存储 · system-server</div></div>
+      <div class="node ngr"><div class="n-title">DataEase</div><div class="n-desc">报表/大屏 · BI 只读 · 独立部署（替代原 Java 报表服务）</div></div>
+    </div>
+  </div>
+
+  <div class="ref-box">
+    <strong>运行底座：</strong>阿里云 ECS · Docker 编排 · 托管中间件（RDS · 云 Redis · 消息队列 · OSS）<br>
+    <strong>数据架构：</strong>cfg / data / log / stats 四库分责；data 库内 schema 标识业务领域（详见第3章）。DataEase 连只读副本。SP 分阶段下线。<br>
+    <strong>数据演进：</strong>复杂逻辑迁至应用层/Job；业务写主库，BI 只读副本<br>
+    <strong>企业集成（非业务域）：</strong>rbs-integration-* 防腐层/适配器 · CRM/ERP/企微/支付/物联网 · 同步数据落各域 schema · 大批量走 Job Worker（详见第3章、第6章）<br>
+    <strong>横切能力（贯穿各层）：</strong>Spring Security + OAuth2/JWT · 多租户/公司/BU 数据权限 · 操作日志 · 统一异常 · MDC 请求标识 · 统一 Job 发布 · 三级缓存
+  </div>
+</div>
+
+<!-- ===================== 2. 业务领域架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 业务领域架构图</div>
+    <div class="page-subtitle">入口/门户、核心链路、支撑域、平台与基础设施</div>
+    <div class="page-design">设计意图：自上而下为入口 → 门户 → 业务域 → 基础支撑 → 基础设施。</div>
+  </header>
+
+  <div class="layer teal mb16">
+    <div class="layer-header">🚪 入口层 · 鉴权</div>
+    <div class="layer-body col">
+      <div class="node nt w100"><div class="n-title">企业微信 OAuth2 → JWT</div><div class="n-desc">Gateway 统一鉴权 → system-server（用户/部门/角色）· 经 API 路由</div></div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="layer" style="border-color:#0f766e;">
+    <div class="layer-header hd-portal">🏠 门户层 · 按角色工作台</div>
+    <div class="layer-body col" style="align-items:stretch;">
+      <div class="row stretch" style="gap:8px;">
+        <div class="dbox"><div class="dbox-hd hd-portal">个人工作台<small>全员</small></div><div class="dbox-bd"><span class="chip ci-del">待办</span><span class="chip ci-del">消息</span><span class="chip ci-del">审批</span></div></div>
+        <div class="dbox"><div class="dbox-hd hd-portal">销售/区域/服务/财务/风控/库管…<small>公司级·BU级</small></div><div class="dbox-bd"><span class="chip ci-del">角色看板</span><span class="chip ci-del">数据范围</span><span class="chip-sm">system + bpm + 各域 API</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector green-arr"><div class="arr"></div></div>
+
+  <div class="layer green mb16">
+    <div class="layer-header">▶ 核心链路 · 获客 → 赢单 → 成交 → 交付</div>
+    <div class="layer-body" style="flex-wrap:nowrap;align-items:flex-start;">
+      <div class="dbox">
+        <div class="dbox-hd hd-cust">客户域<small>Customer</small></div>
+        <div class="dbox-bd">
+          <span class="chip ci-cust">客户主档</span><span class="chip ci-cust">联系人</span><span class="chip ci-cust">设备档案</span>
+          <span class="chip-sm">客户域服务</span>
+        </div>
+      </div>
+      <div class="arr-r">→</div>
+      <div class="dbox">
+        <div class="dbox-hd hd-opp">商机与行动域<small>Opportunity</small></div>
+        <div class="dbox-bd">
+          <span class="chip ci-opp">线索</span><span class="chip ci-opp">商机</span><span class="chip ci-opp">行动任务</span>
+          <span class="chip-sm">商机域服务</span>
+        </div>
+      </div>
+      <div class="arr-r">→</div>
+      <div class="dbox">
+        <div class="dbox-hd hd-sale">销售交易域<small>Sales</small></div>
+        <div class="dbox-bd">
+          <span class="chip ci-sale">销售申请</span><span class="chip ci-sale">销审</span><span class="chip ci-sale">电子合同</span>
+          <span class="chip-sm">销售域服务</span>
+        </div>
+      </div>
+      <div class="arr-r">→</div>
+      <div class="dbox">
+        <div class="dbox-hd hd-del">交付与服务域<small>Delivery</small></div>
+        <div class="dbox-bd">
+          <span class="chip ci-del">交机</span><span class="chip ci-del">服务工单</span><span class="chip ci-del">仓储调拨</span>
+          <span class="chip-sm">交付域服务</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row stretch gap16 mb16">
+    <div class="layer gray flex3" style="min-width:0;">
+      <div class="layer-header">▶ 支撑域</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="row stretch" style="gap:8px;">
+          <div class="dbox flex1">
+            <div class="dbox-hd hd-risk">风控域</div>
+            <div class="dbox-bd"><span class="chip ci-risk">授信</span><span class="chip ci-risk">异常池</span><span class="chip-sm">风控域服务</span></div>
+          </div>
+          <div class="dbox flex2">
+            <div class="dbox-hd hd-fin">财经结算域</div>
+            <div class="dbox-bd"><span class="chip ci-fin">收款计划</span><span class="chip ci-fin">核销</span><span class="chip ci-fin">开票</span><span class="chip-sm">财经域服务</span></div>
+          </div>
+          <div class="dbox flex1">
+            <div class="dbox-hd hd-ins">保险与增值域</div>
+            <div class="dbox-bd"><span class="chip ci-ins">保单</span><span class="chip ci-ins">批改</span><span class="chip-sm">保险域服务</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="layer indigo flex1">
+      <div class="layer-header">DataEase BI<small style="font-weight:400;margin-left:6px;">只读</small></div>
+      <div class="layer-body col">
+        <div class="node ni w100"><div class="n-title">报表 / 大屏</div><div class="n-desc">DataEase · 读 data/stats 副本 · 不写主库</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer indigo mb0">
+    <div class="layer-header hd-plat">基础支撑层（平台基座）</div>
+    <div class="layer-body">
+      <div class="node ni"><div class="n-title">权限组织</div><div class="n-desc">system</div></div>
+      <div class="node ni"><div class="n-title">流程引擎</div><div class="n-desc">bpm-server · 工作流与审批 · Flowable</div></div>
+      <div class="node ni"><div class="n-title">消息通知</div><div class="n-desc">system + MQ</div></div>
+      <div class="node ni"><div class="n-title">字典配置</div><div class="n-desc">rbs_cfg · system-server</div></div>
+      <div class="node ni"><div class="n-title">调度监控</div><div class="n-desc">XXL-Job · Actuator</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 3. 数据架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 数据架构图</div>
+    <div class="page-subtitle">cfg / data / log / stats 四库分责 · data 库内 schema 标识业务领域 · BI 只读副本</div>
+    <div class="page-design">设计意图：配置、运行、落盘、统计分库存放；业务数据集中在 data 库，以 schema 对应领域，解决单库混表维护难题。</div>
+  </header>
+
+  <div class="intro-block intro-bg" style="margin-bottom:14px;">
+    <h3>升级前 · 数据层痛点</h3>
+    <ul class="pain-list">
+      <li>全部对象落在<strong>同一数据库</strong>，表与 schema 缺乏统一规则。</li>
+      <li><strong>配置</strong>（字典/参数/Job 元数据）、<strong>运行态</strong>（会话/锁/临时态）、<strong>业务落盘</strong>混杂，变更易误伤、难排障。</li>
+      <li>无法从库结构判断表归属哪个业务域，跨团队维护成本高。</li>
+    </ul>
+  </div>
+
+  <div class="layer gray mb16">
+    <div class="layer-header">🗄️ 四库分责（RDS PostgreSQL · 逻辑 database）</div>
+    <div class="layer-body col" style="align-items:stretch;gap:10px;">
+      <div class="row w100">
+        <div class="node ngr flex1" style="min-width:200px;"><div class="n-title">rbs_cfg</div><div class="n-desc"><strong>配置库 cfg</strong> · 字典/系统参数 · Job 定义元数据 · 流程/表单配置 · 可版本发布</div></div>
+        <div class="node ngr flex1" style="min-width:200px;"><div class="n-title">rbs_data</div><div class="n-desc"><strong>业务库 data</strong> · 落盘主数据/单据 · 按 <strong>schema 分域</strong></div></div>
+        <div class="node ngr flex1" style="min-width:200px;"><div class="n-title">rbs_log</div><div class="n-desc"><strong>日志库 log</strong> · 操作/登录/API · 审计 · 可归档</div></div>
+        <div class="node ngr flex1" style="min-width:200px;"><div class="n-title">rbs_stats</div><div class="n-desc"><strong>统计库 stats</strong> · 汇总/指标/日终 · Job 写入 · 供 BI</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="layer green mb16">
+    <div class="layer-header">📂 rbs_data · schema 标识业务领域</div>
+    <div class="layer-body col" style="align-items:stretch;">
+      <div class="inner-layer" style="border-color:#10B981;background:#F0FDF9;">
+        <div class="il-title" style="color:#059669;">platform + 七大业务域 schema</div>
+        <div class="row">
+          <div class="node ng"><div class="n-title">platform</div><div class="n-desc">用户/组织/租户</div></div>
+          <div class="node ng"><div class="n-title">customer</div><div class="n-desc">客户域</div></div>
+          <div class="node ng"><div class="n-title">opportunity</div><div class="n-desc">商机域</div></div>
+          <div class="node ng"><div class="n-title">sales</div><div class="n-desc">销售域</div></div>
+          <div class="node ng"><div class="n-title">delivery</div><div class="n-desc">交付域</div></div>
+          <div class="node ng"><div class="n-title">risk</div><div class="n-desc">风控域</div></div>
+          <div class="node ng"><div class="n-title">finance</div><div class="n-desc">财经域</div></div>
+          <div class="node ng"><div class="n-title">insurance</div><div class="n-desc">保险域</div></div>
+        </div>
+      </div>
+      <div class="ref-box" style="margin:0;text-align:left;">
+        <strong>约定：</strong><code>schema.table</code> = 域.实体；Mapper 仅访问本域 schema，<strong>禁止跨域直连表</strong>（跨域 Export/API）。<br>
+        <strong>映射：</strong>一域一服务 ↔ 一 schema（<code>platform</code> 由 system-server 维护）。<br>
+        <strong>BPM：</strong>Flowable 表可放 <code>platform</code> 或 <code>bpm</code> schema，与 bpm-server 配置一致。<br>
+        <strong>外部系统：</strong>不设 <code>integration</code> 业务 schema；对接配置入 <code>rbs_cfg</code>，同步流水入 <code>rbs_log</code>，业务数据写入归属域 schema。
+      </div>
+    </div>
+  </div>
+
+  <div class="row stretch gap12 mb12">
+    <div class="layer indigo flex1">
+      <div class="layer-header">三类数据归位</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="node ni w100"><div class="n-title">配置数据</div><div class="n-desc">→ rbs_cfg · 可发布/回滚</div></div>
+        <div class="node ni w100"><div class="n-title">业务落盘</div><div class="n-desc">→ rbs_data · 域内事务</div></div>
+        <div class="node ni w100"><div class="n-title">运行态</div><div class="n-desc">优先 Redis；必须落库时入 cfg/log 明确表</div></div>
+      </div>
+    </div>
+    <div class="layer indigo flex1">
+      <div class="layer-header">日志与统计</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="node ni w100"><div class="n-title">运行追溯</div><div class="n-desc">→ rbs_log · 只追加</div></div>
+        <div class="node ni w100"><div class="n-title">汇总指标</div><div class="n-desc">→ rbs_stats · Job 写入</div></div>
+      </div>
+    </div>
+    <div class="layer indigo flex1">
+      <div class="layer-header">只读分析</div>
+      <div class="layer-body col">
+        <div class="node ni w100"><div class="n-title">DataEase</div><div class="n-desc">PG 只读副本 · 读 data/stats · 不写主库</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ref-box mb0">
+    <strong>环境：</strong>dev/test/pre/prod 各维护四套逻辑库；禁止非生产连生产库（第11章 CI/CD）。<br>
+    <strong>演进：</strong>存量单库 → 先划 schema → 再拆四库 → 远期可按域独立 RDS。<br>
+    <strong>关联：</strong>存储过程分域下线见第2章；跨域协作见第4章；异步汇总见第5章。
+  </div>
+</div>
+
+<!-- ===================== 4. Export API ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 跨域协作与 Export API</div>
+    <div class="page-subtitle">纯 Java 契约层（非 Feign Client）；微服务下可选 Feign Adapter</div>
+    <div class="page-design">设计意图：打破 api 循环依赖；业务代码只依赖 Export 接口，不依赖他域 server 实现。</div>
+  </header>
+
+  <div class="fc-pipeline mb16">
+    <div class="fc-step nb"><div class="n-title">① 域内事务</div><div class="n-desc">@Transactional</div></div>
+    <div class="flow-h blue"><div class="fh-label">同库</div><div class="fh-tip"></div></div>
+    <div class="fc-step no"><div class="n-title">② 调 Export</div><div class="n-desc">UserExport 等</div></div>
+    <div class="flow-h purple"><div class="fh-label">本地/Adapter</div><div class="fh-tip"></div></div>
+    <div class="fc-step np"><div class="n-title">③ BPM / MQ / Job</div><div class="n-desc">流程 · 事件 · 任务</div></div>
+    <div class="flow-h green"><div class="fh-label">最终一致</div><div class="fh-tip"></div></div>
+    <div class="fc-step ng"><div class="n-title">④ 状态对齐</div><div class="n-desc">businessKey 回调</div></div>
+  </div>
+
+  <div class="row stretch gap16 mb16">
+    <div class="layer blue flex1">
+      <div class="layer-header">Export 契约（推荐）</div>
+      <div class="layer-body col">
+        <div class="node nb w100"><div class="n-title">rbs-export-user.jar</div><div class="n-desc">UserExportService 接口 + DTO · 无 @FeignClient</div></div>
+        <div class="node nb w100"><div class="n-title">system-server 实现</div><div class="n-desc">UserExportServiceImpl</div></div>
+        <div class="node nb w100"><div class="n-title">销售域服务 依赖</div><div class="n-desc">仅 export-user · 不依赖 system-server</div></div>
+        <div class="ref-box w100" style="margin-top:8px;text-align:left;font-size:10px;">
+          <strong>首期 Export：</strong>UserExport · CustomerExport · DeptExport · DictExport（基座/system 实现，他域只引 jar）
+        </div>
+      </div>
+    </div>
+    <div class="layer orange flex1">
+      <div class="layer-header">协作方式优先级</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="ref-box" style="margin:0;text-align:left;">
+          1. <strong>Export API</strong> — 编译期契约 · 单体本地 Bean<br>
+          2. <strong>平台 *-api + Feign</strong> — 基座已有（AdminUserApi 等）<br>
+          3. <strong>RabbitMQ 领域事件</strong> — 解耦通知<br>
+          4. <strong>Job 异步任务</strong> — API / XXL-Job · Worker（第5章）<br>
+          5. <strong>BPM 回调</strong> — FlowBillService 模式（OA 已实践）<br>
+          <br>
+          <strong>不做</strong> 跨服务 Seata 2PC；跨域写采用 Saga / 补偿 / 幂等回调；MQ 发布建议 Outbox 模式。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gov-unified mb0">
+    <div class="gov-unified-hub">
+      <div class="gov-unified-hub-title">单据 + 流程协作示例（销售申请）</div>
+      <div class="gov-unified-hub-desc">销售域 落库 → BpmProcessInstanceApi 发起流程 → bpm 审批结束 → Feign/MQ → 销售域 更新 process_status</div>
+    </div>
+    <div class="gov-unified-flow">
+      <div class="gov-unified-flow-cap">端到端路径</div>
+      <div class="gov-flow-panel">
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">提交</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill">保存销售单</span><span class="gov-chev">→</span>
+            <span class="gov-pill">submitProcessInstance</span><span class="gov-chev">→</span>
+            <span class="gov-pill gp-nacos">回写 processInstanceId</span>
+          </div>
+        </div>
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">审批</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill">bpm-server · 工作流审批</span><span class="gov-chev">→</span>
+            <span class="gov-pill">Flowable</span><span class="gov-chev">→</span>
+            <span class="gov-pill">状态事件</span>
+          </div>
+        </div>
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">回调</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill">统一流程回调（businessKey 幂等）</span><span class="gov-chev">→</span>
+            <span class="gov-pill">updateProcessStatus(businessKey)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===================== 5. 异步任务与 Job Worker ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 异步任务与 Job Worker 架构</div>
+    <div class="page-subtitle">Job 定义统一管理 · API / XXL-Job 双通道发布 · Worker 并行扩展与单实例</div>
+    <div class="page-design">设计意图：横切<strong>任务执行平台</strong>，与 RabbitMQ 领域事件互补；业务核心仍是领域边界与单据流程（第2章、第4章）。</div>
+  </header>
+
+  <div class="ref-box mb16" style="text-align:left;">
+    <strong>治理红线：</strong>业务 <code>rbs-*-server</code> 禁止 <code>@Scheduled</code>；存量迁移至 jobCode + XXL-Job/API。<br>
+    <strong>架构定位：</strong>Job 体系是<strong>重要的横切基础设施</strong>，不是业务域本身。MQ 回答「发生了什么」；Job 回答「把这件事可靠做完」（可追踪、可重试、可观测）。各 <code>rbs-*-server</code> 内嵌 <strong>JobPublisher</strong>；重计算由 <strong>rbs-job-worker-server</strong> 执行。
+  </div>
+
+  <div class="layer orange mb12">
+    <div class="layer-header">📋 Job 定义中心（统一管理）</div>
+    <div class="layer-body col" style="align-items:stretch;">
+      <div class="row w100">
+        <div class="node no flex1"><div class="n-title">jobCode</div><div class="n-desc">全局唯一任务编码</div></div>
+        <div class="node no flex1"><div class="n-title">所属域</div><div class="n-desc">customer / sales …</div></div>
+        <div class="node no flex1"><div class="n-title">Handler</div><div class="n-desc">Worker 路由</div></div>
+        <div class="node no flex1"><div class="n-title">concurrencyMode</div><div class="n-desc">PARALLEL / SINGLETON</div></div>
+      </div>
+      <div class="ref-box" style="margin:0;text-align:left;font-size:10px;">
+        元数据落 <strong>rbs_cfg</strong>（经 system-server 管理；或 job-registry）· 管理端启停 · 超时/重试 · API 与 XXL-Job <strong>共用同一 jobCode</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="row stretch gap12 mb12">
+    <div class="layer blue flex1">
+      <div class="layer-header">发布源 A · API 触发</div>
+      <div class="layer-body col">
+        <div class="node nb w100"><div class="n-title">管理端 / 开放 API</div><div class="n-desc">同步受理 · 返回 jobInstanceId</div></div>
+        <div class="node nb w100"><div class="n-title">JobPublisher.submit</div><div class="n-desc">落库 job_instance · 投递 RabbitMQ</div></div>
+      </div>
+    </div>
+    <div class="layer purple flex1">
+      <div class="layer-header">发布源 B · XXL-Job 调度</div>
+      <div class="layer-body col">
+        <div class="node np w100"><div class="n-title">xxl-job-admin</div><div class="n-desc">Cron · 手动 · 补跑</div></div>
+        <div class="node np w100"><div class="n-title">触发同一 jobCode</div><div class="n-desc">→ JobPublisher.trigger</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fc-pipeline mb16">
+    <div class="fc-step no"><div class="n-title">定义</div><div class="n-desc">Job 注册表</div></div>
+    <div class="flow-h orange"><div class="fh-tip"></div></div>
+    <div class="fc-step nb"><div class="n-title">发布</div><div class="n-desc">API 或 XXL-Job</div></div>
+    <div class="flow-h blue"><div class="fh-tip"></div></div>
+    <div class="fc-step np"><div class="n-title">通道</div><div class="n-desc">RabbitMQ</div></div>
+    <div class="flow-h green"><div class="fh-tip"></div></div>
+    <div class="fc-step ng"><div class="n-title">执行</div><div class="n-desc">rbs-job-worker-server</div></div>
+  </div>
+
+  <div class="row stretch gap12 mb16">
+    <div class="layer green flex1">
+      <div class="layer-header">Worker 池 · 可横向扩展</div>
+      <div class="layer-body col">
+        <div class="node ng w100"><div class="n-title">PARALLEL</div><div class="n-desc">多副本竞争消费 · 导出/同步</div></div>
+        <span class="job-mode-badge job-mode-scale">replicas: N</span>
+      </div>
+    </div>
+    <div class="layer purple flex1">
+      <div class="layer-header">Worker · 唯一实例</div>
+      <div class="layer-body col">
+        <div class="node np w100"><div class="n-title">SINGLETON</div><div class="n-desc">对账 · 日终 · 全局清理</div></div>
+        <span class="job-mode-badge job-mode-single">replicas: 1 / SAC / 分布式锁</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="job-unified mb0">
+    <div class="job-unified-hub">
+      <div class="job-unified-hub-title">端到端示例 · 导出 vs 日终对账</div>
+      <div class="job-unified-hub-desc">发布源不同 · 同一 jobCode 模型 · Worker 按并发策略分流</div>
+    </div>
+    <div class="job-unified-flow">
+      <div class="job-flow-lane">
+        <div class="job-flow-lane-label">API</div>
+        <div class="gov-flow-steps" style="flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:4px;">
+          <span class="job-pill">POST …/export</span><span class="job-chev">→</span>
+          <span class="job-pill">JobPublisher.submit</span><span class="job-chev">→</span>
+          <span class="job-pill">MQ 队列</span><span class="job-chev">→</span>
+          <span class="job-pill">Worker ×N</span>
+        </div>
+      </div>
+      <div class="job-flow-lane">
+        <div class="job-flow-lane-label">调度</div>
+        <div class="gov-flow-steps" style="flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:4px;">
+          <span class="job-pill">XXL-Job Cron</span><span class="job-chev">→</span>
+          <span class="job-pill">jobCode 日终对账</span><span class="job-chev">→</span>
+          <span class="job-pill">同一通道</span><span class="job-chev">→</span>
+          <span class="job-pill">Worker 单实例</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 6. 微服务治理 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 微服务治理架构</div>
+    <div class="page-subtitle">Nacos 为配置与注册发现枢纽</div>
+    <div class="page-design">设计意图：配置 · 注册发现 · 消息 三列治理能力，与 Java 云原生栈对齐。</div>
+  </header>
+
+  <div class="layer blue mb12">
+    <div class="layer-header">服务进程全景</div>
+    <div class="layer-body svc-panorama">
+      <span class="tag tag-b tag-stack"><span class="tag-svc">gateway-server</span><span class="tag-cn">网关</span></span>
+      <span class="tag tag-b tag-stack"><span class="tag-svc">system-server</span><span class="tag-cn">系统/基础设施</span></span>
+      <span class="tag tag-b tag-stack"><span class="tag-svc">bpm-server</span><span class="tag-cn">工作流/审批</span></span>
+      <span class="tag tag-p tag-stack"><span class="tag-svc">xxl-job-admin</span><span class="tag-cn">调度中心</span></span>
+      <span class="tag tag-p tag-stack"><span class="tag-svc">rbs-job-worker-server</span><span class="tag-cn">任务执行</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-customer-server</span><span class="tag-cn">客户域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-opportunity-server</span><span class="tag-cn">商机域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-sales-server</span><span class="tag-cn">销售域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-delivery-server</span><span class="tag-cn">交付域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-risk-server</span><span class="tag-cn">风控域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-finance-server</span><span class="tag-cn">财经域</span></span>
+      <span class="tag tag-g tag-stack"><span class="tag-svc">rbs-insurance-server</span><span class="tag-cn">保险域</span></span>
+      <span class="tag tag-o tag-stack" style="opacity:.7"><span class="tag-svc">rbs-integration-*</span><span class="tag-cn">企业集成·横切</span></span>
+      <span class="tag tag-b tag-stack" style="opacity:.75"><span class="tag-svc">DataEase</span><span class="tag-cn">报表大屏·BI</span></span>
+      <span class="tag tag-b tag-stack" style="opacity:.75"><span class="tag-svc">pay-server</span><span class="tag-cn">支付渠道·按需</span></span>
+      <span class="tag tag-b tag-stack" style="opacity:.55"><span class="tag-svc">portal/BFF</span><span class="tag-cn">工作台·可选</span></span>
+      <span style="font-size:11px;color:#64748B;">说明：Maven 仍可保留 <code>rbs-module-system</code> / <code>rbs-module-infra</code> 分模块，<strong>运行时合并为单一 system-server</strong>；单体联调见 <code>platform-server</code>（<code>-Pboot</code>，第8章）。报表/大屏由 <strong>DataEase</strong> 独立部署。</span></p>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="row stretch gap16 mb12">
+    <div class="layer cyan flex1">
+      <div class="layer-header">🔧 配置中心</div>
+      <div class="layer-body col">
+        <div class="node nc w100"><div class="n-title">Nacos Config</div><div class="n-desc">application-{profile}.yaml · 动态刷新</div></div>
+        <div class="node nc w100"><div class="n-title">多环境</div><div class="n-desc">dev / test / pre / prod 命名空间隔离</div></div>
+      </div>
+    </div>
+    <div class="layer orange flex1">
+      <div class="layer-header">📬 消息治理</div>
+      <div class="layer-body col">
+        <div class="node no w100"><div class="n-title">RabbitMQ</div><div class="n-desc">Exchange/Queue 按域 · 消费者独立</div></div>
+        <div class="node no w100"><div class="n-title">XXL-Job</div><div class="n-desc">集成调度 · 执行器注册</div></div>
+      </div>
+    </div>
+    <div class="layer purple flex1">
+      <div class="layer-header">📡 注册与发现</div>
+      <div class="layer-body col">
+        <div class="node np w100"><div class="n-title">Nacos Discovery</div><div class="n-desc">服务注册 · 实例列表</div></div>
+        <div class="node np w100"><div class="n-title">Gateway 动态路由</div><div class="n-desc">lb:// 服务名 · 入口负载均衡</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gov-unified mb0">
+    <div class="gov-unified-hub">
+      <div class="gov-unified-hub-title">Nacos + Redis 治理中枢</div>
+      <div class="gov-unified-hub-desc">Nacos：服务注册 · 配置下发 · Gateway 路由 │ Redis：缓存 · 分布式锁 · 会话（非服务注册）</div>
+    </div>
+    <div class="gov-unified-flow">
+      <div class="gov-flow-panel">
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">配置</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill gp-nacos">Nacos 配置</span><span class="gov-chev">→</span>
+            <span class="gov-pill">@RefreshScope</span><span class="gov-chev">→</span>
+            <span class="gov-pill">实例生效</span>
+          </div>
+        </div>
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">调用</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill">Gateway</span><span class="gov-chev">→</span>
+            <span class="gov-pill gp-nacos">发现 各业务域服务</span><span class="gov-chev">→</span>
+            <span class="gov-pill">Feign / 本地 Export</span>
+          </div>
+        </div>
+        <div class="gov-flow-lane">
+          <div class="gov-flow-lane-label">单体</div>
+          <div class="gov-flow-steps">
+            <span class="gov-pill">platform-server</span><span class="gov-chev">→</span>
+            <span class="gov-pill">-Pboot 瘦 jar 聚合</span><span class="gov-chev">→</span>
+            <span class="gov-pill">Export 本地实现</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 7. 分层架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 分层架构图</div>
+    <div class="page-subtitle">表示层 → 应用层 → 领域层 → 基础设施 · 横切安全与可观测</div>
+  </header>
+
+  <div class="lf-layer" style="border-color:#2B7DE9;">
+    <div class="lf-bar" style="background:#2B7DE9;">表示层</div>
+    <div class="lf-body">
+      <div class="node nb"><div class="n-title">Controller</div><div class="n-desc">/admin-api/rbs/**</div></div>
+      <div class="node nb"><div class="n-title">VO 校验</div><div class="n-desc">@Valid · 全局异常</div></div>
+      <div class="node nb"><div class="n-title">ApiImpl</div><div class="n-desc">/rpc-api/** · 对内</div></div>
+      <div class="node nb"><div class="n-title">Gateway</div><div class="n-desc">统一入口</div></div>
+    </div>
+  </div>
+  <div class="flow-v blue"><div class="fv-line" style="height:10px;"></div><div class="fv-label">编排用例</div><div class="fv-tip"></div></div>
+
+  <div class="lf-layer" style="border-color:#00B578;">
+    <div class="lf-bar" style="background:#00B578;">应用层</div>
+    <div class="lf-body" style="background:#F0FDF9;">
+      <div class="node ng"><div class="n-title">Service 编排</div></div>
+      <div class="node ng"><div class="n-title">FlowBillService</div><div class="n-desc">framework 契约 · 各域 *-server 实现</div></div>
+      <div class="node ng"><div class="n-title">MQ Consumer</div></div>
+      <div class="node ng"><div class="n-title">JobPublisher</div></div>
+      <div class="node ng"><div class="n-title">Job Worker</div></div>
+    </div>
+  </div>
+  <div class="flow-v green"><div class="fv-line" style="height:10px;"></div><div class="fv-label">领域逻辑</div><div class="fv-tip"></div></div>
+
+  <div class="lf-layer" style="border-color:#F59E0B;">
+    <div class="lf-bar" style="background:#D97706;">领域层</div>
+    <div class="lf-body" style="background:#FFFBEB;">
+      <span class="tag tag-o">客户域</span><span class="tag tag-o">商机域</span><span class="tag tag-o">销售域</span><span class="tag tag-o">交付域</span>
+      <span class="tag tag-p">风控域</span><span class="tag tag-p">财经域</span><span class="tag tag-p">保险域</span>
+      <span class="tag tag-b">system</span><span class="tag tag-b">bpm</span>
+    </div>
+  </div>
+  <div class="flow-v orange"><div class="fv-line" style="height:10px;"></div><div class="fv-label">持久化 · 消息</div><div class="fv-tip"></div></div>
+
+  <div class="lf-layer" style="border-color:#7C3AED;">
+    <div class="lf-bar" style="background:#7C3AED;">基础设施</div>
+    <div class="lf-body" style="background:#FAF5FF;">
+      <div class="node np"><div class="n-title">MyBatis-Plus</div><div class="n-desc">ORM · Mapper</div></div>
+      <div class="node np"><div class="n-title">Redis</div></div>
+      <div class="node np"><div class="n-title">RabbitMQ</div></div>
+      <div class="node np"><div class="n-title">Nacos</div></div>
+      <div class="node np"><div class="n-title">OSS</div></div>
+    </div>
+  </div>
+  <div class="flow-v"><div class="fv-line" style="height:8px;"></div><div class="fv-label">横切贯穿各层</div><div class="fv-tip"></div></div>
+
+  <div class="lf-layer" style="border-color:#EF4444;border-style:dashed;margin-bottom:0;">
+    <div class="lf-bar" style="background:#EF4444;">横切</div>
+    <div class="lf-body" style="background:#FEF2F2;">
+      <div class="node nr"><div class="n-title">Security + JWT</div></div>
+      <div class="node nr"><div class="n-title">租户 / 数据权限</div></div>
+      <div class="node nr"><div class="n-title">操作日志</div></div>
+      <div class="node nr"><div class="n-title">Actuator</div></div>
+      <div class="node nr"><div class="n-title">多级缓存</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 8. 部署架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 部署架构图</div>
+    <div class="page-subtitle">阿里云 CDN/SLB → ECS · Docker Compose（Gateway · 平台 · BPM · Worker · 业务域）→ 托管中间件 · ELK 旁路</div>
+  </header>
+
+  <div class="layer blue mb16">
+    <div class="layer-header">🌐 阿里云 CDN · SLB 入口</div>
+    <div class="layer-body">
+      <div class="node nb"><div class="n-title">静态前端</div></div>
+      <div class="node nb"><div class="n-title">API 反向代理</div><div class="n-desc">→ Gateway</div></div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="layer green mb16">
+    <div class="layer-header" style="background:#059669;">🟢 生产环境（阿里云 ECS · Docker Compose 编排）</div>
+    <div class="layer-body col">
+      <div class="inner-layer">
+        <div class="il-title">网关</div>
+        <div class="row">
+          <div class="node ng"><div class="n-title">gateway-server ×N</div></div>
+        </div>
+      </div>
+      <div class="inner-layer">
+        <div class="il-title">平台基座</div>
+        <div class="row">
+          <div class="node ni"><div class="n-title">system-server ×N</div><div class="n-desc">权限/字典/消息 · 文件/日志 · Job 定义</div></div>
+          <div class="node ni"><div class="n-title">bpm-server ×N</div><div class="n-desc">工作流与审批 · Flowable · 可水平扩展</div></div>
+          <div class="node ni"><div class="n-title">pay-server</div><div class="n-desc">支付渠道 · 按需；业务核销归财经域</div></div>
+          <div class="node nc w100" style="opacity:.85"><div class="n-title">portal/BFF（可选）</div><div class="n-desc">角色工作台聚合 · 主页缓存 BFF · 禁止直连他域 DB</div></div>
+        </div>
+      </div>
+      <div class="inner-layer" style="border-color:#D97706;background:#FFFBEB;">
+        <div class="il-title" style="color:#B45309;">异步任务（横切 · 详见第5章）</div>
+        <div class="row">
+          <div class="node no"><div class="n-title">xxl-job-admin</div><div class="n-desc">Cron · 调度发布</div></div>
+          <div class="node no"><div class="n-title">rbs-job-worker-server ×N</div><div class="n-desc">Job 执行 · 可扩容</div></div>
+        </div>
+      </div>
+      <div class="inner-layer">
+        <div class="il-title">RBS 业务服务</div>
+        <div class="row">
+          <div class="node ng"><div class="n-title">各业务域服务 ×N</div><div class="n-desc">按域独立容器 · compose 扩容</div></div>
+        </div>
+      </div>
+      <div class="inner-layer">
+        <div class="il-title">阿里云托管中间件</div>
+        <div class="row">
+          <div class="node ngr"><div class="n-title">RDS · rbs_cfg</div><div class="n-desc">配置库</div></div>
+          <div class="node ngr"><div class="n-title">RDS · rbs_data</div><div class="n-desc">业务库 · schema 分域</div></div>
+          <div class="node ngr"><div class="n-title">RDS · rbs_log</div><div class="n-desc">日志库</div></div>
+          <div class="node ngr"><div class="n-title">RDS · rbs_stats</div><div class="n-desc">统计库</div></div>
+          <div class="node ngr"><div class="n-title">云 Redis</div></div>
+          <div class="node ngr"><div class="n-title">Nacos（自建或 MSE）</div></div>
+          <div class="node ngr"><div class="n-title">RabbitMQ</div></div>
+        </div>
+      </div>
+      <div class="inner-layer" style="border-color:#0369a1;background:#F0F9FF;">
+        <div class="il-title" style="color:#0369a1;">企业集成（横切 · 非业务域）</div>
+        <div class="row">
+          <div class="node nt flex1"><div class="n-title">rbs-integration-*</div><div class="n-desc">CRM/ERP/企微/支付/物联网 · 适配器 jar</div></div>
+          <div class="node nt flex1"><div class="n-title">同步 / 对账 Job</div><div class="n-desc">rbs-job-worker · 非独立业务库</div></div>
+        </div>
+      </div>
+      <div class="inner-layer">
+        <div class="il-title">分析与 BI（非 Java 微服务）</div>
+        <div class="row">
+          <div class="node ngr"><div class="n-title">DataEase</div><div class="n-desc">报表/大屏 · PG 只读副本 · 独立容器</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer gray mb0">
+    <div class="layer-header">📊 运维旁路</div>
+    <div class="layer-body">
+      <div class="node ngr flex1"><div class="n-title">ELK</div><div class="n-desc">日志汇聚</div></div>
+      <div class="node ngr flex1"><div class="n-title">Prometheus</div><div class="n-desc">Micrometer 指标</div></div>
+      <div class="node ngr flex1"><div class="n-title">Actuator</div><div class="n-desc">健康检查 · 端点</div></div>
+    </div>
+  </div>
+
+  <div class="ref-box">
+    <strong>开发环境：</strong><code>mvn package -Pboot</code> → <code>java -jar platform-server.jar</code> 单体联调；亦可本地 <code>docker compose</code> 起依赖与中台服务。<br>
+    <strong>生产：</strong>阿里云 <strong>ECS</strong> 宿主机 · <code>docker compose</code> 编排（非 ACK/K8s）· <code>-Pcloud</code> 构建镜像 · 各服务独立容器（含 bpm、job-worker）· Nacos（自建或 MSE） 注册 · 基线参考 <code>platform-server/docker-compose.yml</code>。
+  </div>
+</div>
+
+<!-- ===================== 9. 安全架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 安全架构图</div>
+    <div class="page-subtitle">Gateway 统一鉴权 · Spring Security · 公司/BU 数据权限</div>
+  </header>
+
+  <div class="layer blue mb16">
+    <div class="layer-header">📨 请求入站</div>
+    <div class="layer-body h-flow" style="width:100%;">
+      <div class="node nb"><div class="n-title">客户端</div></div>
+      <div class="h-arrow"></div>
+      <div class="node nb"><div class="n-title">SLB HTTPS</div></div>
+      <div class="h-arrow"></div>
+      <div class="node nb"><div class="n-title">gateway-server</div></div>
+      <div class="h-arrow"></div>
+      <div class="node nb"><div class="n-title">业务 Controller</div></div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="layer orange mb16">
+    <div class="layer-header">🔗 安全过滤器链（rbs-framework）</div>
+    <div class="layer-body h-flow" style="flex-wrap:wrap;">
+      <div class="node no"><div class="n-title">Token 解析</div></div>
+      <div class="h-arrow short"></div>
+      <div class="node no"><div class="n-title">租户上下文</div></div>
+      <div class="h-arrow short"></div>
+      <div class="node no"><div class="n-title">权限注解</div><div class="n-desc">@PreAuthorize</div></div>
+      <div class="h-arrow short"></div>
+      <div class="node no"><div class="n-title">数据权限 SQL</div><div class="n-desc">公司/BU</div></div>
+      <div class="h-arrow short"></div>
+      <div class="node no"><div class="n-title">@Valid 校验</div></div>
+    </div>
+  </div>
+
+  <div class="layer red mb0">
+    <div class="layer-header">🔐 企微 SSO（统一入口）</div>
+    <div class="layer-body">
+      <div class="node nr w100"><div class="n-title">WeCom OAuth2 → system 换发 JWT → Gateway 校验 → 下游透传 userId / tenantId / companyId</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 10. 缓存架构 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 缓存架构图</div>
+    <div class="page-subtitle">三级缓存 · 主页数据缓存 · 写路径以 DB 为准</div>
+  </header>
+
+  <div class="layer blue mb16">
+    <div class="layer-header">第 1 层 · CDN / Gateway 边缘</div>
+    <div class="layer-body">
+      <div class="node nb flex1"><div class="n-title">静态资源缓存</div></div>
+      <div class="node nb flex1"><div class="n-title">只读 GET 短 TTL</div><div class="n-desc">字典等</div></div>
+    </div>
+  </div>
+
+  <div class="layer purple mb16">
+    <div class="layer-header">第 2 层 · Redis 分布式</div>
+    <div class="layer-body">
+      <div class="node np"><div class="n-title">会话 / Token 黑名单</div></div>
+      <div class="node np"><div class="n-title">字典 / 配置</div></div>
+      <div class="node np"><div class="n-title">热点客户·商机</div></div>
+      <div class="node np"><div class="n-title">主页数据缓存</div><div class="n-desc">工作台/首页聚合 · 按角色·BU · 写后失效</div></div>
+      <div class="node np"><div class="n-title">分布式锁</div><div class="n-desc">Redisson</div></div>
+    </div>
+  </div>
+
+  <div class="layer gray mb0">
+    <div class="layer-header">第 3 层 · 本地 Caffeine（可选）</div>
+    <div class="layer-body">
+      <div class="node ngr w100"><div class="n-title">Gateway / 服务内极热数据 · 短 TTL · 与 Redis 配合</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 11. CI/CD ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · CI/CD 自动化发布流程</div>
+    <div class="page-subtitle">Git → Maven 构建 → Docker 镜像 → ECS Compose 部署 → 健康检查</div>
+  </header>
+
+  <div class="fc-pipeline mb16">
+    <div class="fc-step np"><div class="n-title">① 代码</div><div class="n-desc">RBS Monorepo + 各业务域模块</div></div>
+    <div class="flow-h purple"><div class="fh-label">触发</div><div class="fh-tip"></div></div>
+    <div class="fc-step nb"><div class="n-title">② 构建</div><div class="n-desc">mvn package -Pcloud</div></div>
+    <div class="flow-h blue"><div class="fh-label">镜像</div><div class="fh-tip"></div></div>
+    <div class="fc-step no"><div class="n-title">③ 预发</div></div>
+    <div class="flow-h blue"><div class="fh-label">放行</div><div class="fh-tip"></div></div>
+    <div class="fc-step ng"><div class="n-title">④ 生产</div><div class="n-desc">compose 重建/滚动更新容器</div></div>
+    <div class="flow-h green"><div class="fh-label">验证</div><div class="fh-tip"></div></div>
+    <div class="fc-step nt"><div class="n-title">⑤ 回滚</div><div class="n-desc">上一镜像 tag · compose 回滚</div></div>
+  </div>
+
+  <div class="layer blue mb16">
+    <div class="layer-header">环境矩阵（升级后强制）</div>
+    <div class="layer-body col">
+      <div class="node nb w100"><div class="n-title">dev / test</div><div class="n-desc">独立库 · 脱敏 · 禁止连生产 RDS</div></div>
+      <div class="node no w100"><div class="n-title">pre</div><div class="n-desc">预发库 · compose 验证 · 审批后上生产</div></div>
+      <div class="node ng w100"><div class="n-title">prod</div><div class="n-desc">生产 ECS · 仅 CI 发布 · 回滚预案</div></div>
+    </div>
+  </div>
+
+  <div class="layer green mb0">
+    <div class="layer-header">🖥️ 后端发布要点</div>
+    <div class="layer-body col">
+      <div class="node ng w100"><div class="n-title">每域独立 Docker 镜像</div><div class="n-desc">销售域服务.jar · ENTRYPOINT java -jar · Compose 一服务一容器</div></div>
+      <div class="node ng w100"><div class="n-title">平台与业务分批次发布</div><div class="n-desc">先 system（含 infra）/bpm · 再 RBS 业务域服务</div></div>
+      <div class="node ng w100"><div class="n-title">ECS · Docker Compose</div><div class="n-desc">流水线/SSH 至 ECS · compose pull & up -d · 非 K8s</div></div>
+      <div class="node ng w100"><div class="n-title">Actuator /health 探活</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 12. 可观测性 ===================== -->
+<div class="page">
+  <header class="page-head">
+    <div class="page-title">RBS 系统 · 可观测性架构图</div>
+    <div class="page-subtitle">日志 · 指标 · 业务预警</div>
+  </header>
+
+  <div class="row stretch gap16 mb16">
+    <div class="layer blue flex1">
+      <div class="layer-header">请求关联</div>
+      <div class="layer-body col">
+        <div class="node nb w100"><div class="n-title">Gateway X-Request-Id</div><div class="n-desc">透传 MDC · ELK 按 requestId 检索全链路日志</div></div>
+      </div>
+    </div>
+    <div class="layer gray flex1">
+      <div class="layer-header">日志</div>
+      <div class="layer-body col">
+        <div class="node ngr w100"><div class="n-title">JSON 日志 → ELK</div><div class="n-desc">system-server API 访问/错误日志</div></div>
+      </div>
+    </div>
+    <div class="layer orange flex1">
+      <div class="layer-header">业务预警</div>
+      <div class="layer-body col">
+        <div class="node no w100"><div class="n-title">风控预警 · 审批超时 · 回款逾期</div><div class="n-desc">→ MQ → 企微推送</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer indigo mb0">
+    <div class="layer-header">监控大盘</div>
+    <div class="layer-body">
+      <div class="node ni"><div class="n-title">JVM / CPU / QPS</div></div>
+      <div class="node ni"><div class="n-title">PostgreSQL 慢查询</div><div class="n-desc">pg_stat_statements</div></div>
+      <div class="node ni"><div class="n-title">MQ 堆积</div></div>
+      <div class="node ni"><div class="n-title">Nacos 健康</div></div>
+    </div>
+  </div>
+  <div class="layer gray mb12">
+    <div class="layer-header">与现有平台模块关系</div>
+    <div class="layer-body col" style="align-items:stretch;">
+      <div class="ref-box" style="margin:0;text-align:left;">
+        <strong>现状：</strong>存量单体平台 + OA/HRM 等遗留模块并行运行；目标态见下文。<br>
+        <strong>目标：</strong>本册 <code>rbs-*-server</code> 七大域分阶段落地（见第6章进程全景）。<br>
+        <strong>模块映射：</strong>crm → 客户/商机域 · erp/wms → 销售/交付域 · <code>rbs-module-pay</code> 渠道能力 → pay-server（按需）或合入财经域；<strong>收款/核销/开票归财经域</strong>。<br>
+        <strong>原则：</strong>按领域边界新建域模块；<strong>外部对接</strong>走 integration 适配层，不设集成业务域。
+      </div>
+    </div>
+  </div>
+
+  <div class="ref-box" style="margin-top:16px;">
+    <strong>文档修订：</strong> v1.6 · 2026-05-18 · 七大业务域；企业集成改为横切（非域）
+  </div>
+</div>
+
+</body>
+</html>
