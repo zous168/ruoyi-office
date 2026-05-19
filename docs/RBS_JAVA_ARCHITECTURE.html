@@ -223,9 +223,22 @@
   .ref-box { padding: 10px 12px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; font-size: 10px; color: #64748B; line-height: 1.6; margin-top: 10px; }
   .ref-box strong { color: #334155; }
 
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
   @media print {
     body { background: #fff; }
-    .page { box-shadow: none; margin: 0 auto 20px; page-break-inside: avoid; }
+    .page {
+      width: 100%;
+      max-width: 277mm;
+      box-shadow: none;
+      margin: 0 auto 12px;
+      border-radius: 0;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+    .page:last-child { page-break-after: auto; }
   }
 </style>
 </head>
