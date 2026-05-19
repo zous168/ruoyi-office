@@ -248,7 +248,7 @@
 <div class="page page-cover">
   <div class="cover-brand">RBS · JAVA MICROSERVICES ARCHITECTURE</div>
   <h1 class="cover-title">RBS 系统 · Java 微服务架构设计说明</h1>
-  <p class="cover-meta">技术栈：Java 17 · Spring Boot 3.5 · Spring Cloud Alibaba · Nacos · Gateway · PostgreSQL · Redis · RabbitMQ · Flowable<br>
+  <p class="cover-meta">技术栈：Java · Spring Boot · Spring Cloud Alibaba · Nacos · Gateway · PostgreSQL · Redis · RabbitMQ · X7 Flow<br>
   运行环境：<strong>阿里云</strong>（ECS · Docker 编排 · 托管中间件）· 技术基座：<strong>平台基座</strong> · 业务领域：<strong>销售与服务全链路七大域</strong></p>
   <p class="cover-lead">
     本文档描述 RBS 系统 <strong>Java 微服务</strong> 目标架构：整体建立在<strong>阿里云基础设施</strong>之上；平台基座与 RBS 业务域协同，业务按客户、商机、销售、交付、风控、财经、保险等七大业务域拆分，支持单体聚合与独立部署。<br>
@@ -276,7 +276,7 @@
   <div class="intro-block">
     <h3>架构范围</h3>
     <ul>
-      <li><strong>业务域</strong> — 入口/门户、核心链路（获客→交付）、支撑域（风控/财经/保险）、外部集成；OA·HRM 等遗留模块并行（见第12章）</li>
+      <li><strong>业务域</strong> — 入口/门户、核心链路（获客→交付）、支撑域（风控/财经/保险）、外部集成；OA·HRM 等遗留模块并行（见第2章演进映射）</li>
       <li><strong>数据架构</strong> — cfg / data / log / stats 分库 · data 库 schema 分域（第3章）</li>
       <li><strong>工程视图</strong> — 总体/部署/治理/异步任务/分层/安全/缓存/CI/CD/可观测性</li>
       <li><strong>异步任务</strong> — Job 定义中心、API / XXL-Job 双通道发布、Worker 并行与单实例</li>
@@ -350,10 +350,10 @@
   </header>
 
   <div class="layer blue mb16">
-    <div class="layer-header">🖥️ 客户端层（入口层）</div>
-    <div class="layer-body lb-col-stretch" style="flex-direction:column;align-items:stretch;">
-      <div class="inner-layer">
-        <div class="il-title">主动访问渠道 · 多端统一登录</div>
+    <div class="layer-header">🖥️ 客户端层（入口层）<span style="font-weight:500;font-size:11px;color:#64748B;margin-left:8px;">主动访问 + 系统主动触发</span></div>
+    <div class="layer-body row stretch gap12" style="align-items:stretch;">
+      <div class="inner-layer flex1" style="min-width:0;">
+        <div class="il-title">主动访问</div>
         <div class="row gap8">
           <div class="node nb flex1"><div class="n-title">Web 管理端</div><div class="n-desc">Vue3 + Vben</div></div>
           <div class="node nb flex1"><div class="n-title">小程序</div><div class="n-desc">uni-app</div></div>
@@ -361,9 +361,9 @@
           <div class="node nb flex1"><div class="n-title">企业微信</div><div class="n-desc">OAuth2 SSO</div></div>
         </div>
       </div>
-      <div class="inner-layer">
-        <div class="il-title">系统主动触达</div>
-        <div class="row">
+      <div class="inner-layer flex1" style="min-width:0;">
+        <div class="il-title">系统主动触发</div>
+        <div class="row gap8">
           <div class="node nt flex1"><div class="n-title">企微消息</div><div class="n-desc">审批待办 · 风控预警</div></div>
           <div class="node nt flex1"><div class="n-title">短信 / App 推送</div><div class="n-desc">到期 · 回款逾期</div></div>
           <div class="node nt flex1"><div class="n-title">站内信</div><div class="n-desc">system 消息中心</div></div>
@@ -404,7 +404,7 @@
         <div class="il-title" style="color:#4338CA;">平台基座（已实现）</div>
         <div class="row">
           <div class="node ni"><div class="n-title">system-server</div><div class="n-desc">系统与基础设施合一（权限/字典/消息 · 文件/日志 · Job 定义）</div></div>
-          <div class="node ni"><div class="n-title">bpm-server</div><div class="n-desc">工作流与审批（Flowable · 流程定义/实例/任务回调）</div></div>
+          <div class="node ni"><div class="n-title">bpm-server</div><div class="n-desc">工作流与审批（X7 Flow · 流程定义/实例/任务回调）</div></div>
           <div class="node ni"><div class="n-title">pay-server</div><div class="n-desc">支付渠道对接（按需独立进程；业务收款/核销归财经域）</div></div>
         </div>
       </div>
@@ -548,16 +548,28 @@
     </div>
   </div>
 
-  <div class="layer indigo mb0">
+  <div class="layer indigo mb12">
     <div class="layer-header hd-plat">基础支撑层（平台基座）</div>
     <div class="layer-body">
       <div class="node ni"><div class="n-title">权限组织</div><div class="n-desc">system</div></div>
-      <div class="node ni"><div class="n-title">流程引擎</div><div class="n-desc">bpm-server · 工作流与审批 · Flowable</div></div>
+      <div class="node ni"><div class="n-title">流程引擎</div><div class="n-desc">bpm-server · 工作流与审批 · X7 Flow</div></div>
       <div class="node ni"><div class="n-title">消息通知</div><div class="n-desc">system + MQ</div></div>
       <div class="node ni"><div class="n-title">字典配置</div><div class="n-desc">rbs_cfg · system-server</div></div>
       <div class="node ni"><div class="n-title">调度监控</div><div class="n-desc">XXL-Job · Actuator</div></div>
     </div>
   </div>
+  <div class="layer gray mb0">
+    <div class="layer-header">与现有平台模块关系（演进映射）</div>
+    <div class="layer-body col" style="align-items:stretch;">
+      <div class="ref-box" style="margin:0;text-align:left;">
+        <strong>现状：</strong>存量单体平台 + OA/HRM 等遗留模块并行运行。<br>
+        <strong>目标：</strong>本册 <code>rbs-*-server</code> 七大域分阶段落地（见第6章进程全景）。<br>
+        <strong>模块映射：</strong>crm → 客户/商机域 · erp/wms → 销售/交付域 · pay 渠道 → pay-server（按需）或合入财经域；<strong>收款/核销/开票归财经域</strong>。<br>
+        <strong>原则：</strong>按领域边界新建域模块；外部对接走 integration 适配层，不设集成业务域。
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ===================== 3. 数据架构 ===================== -->
@@ -610,7 +622,7 @@
       <div class="ref-box" style="margin:0;text-align:left;">
         <strong>约定：</strong><code>schema.table</code> = 域.实体；Mapper 仅访问本域 schema，<strong>禁止跨域直连表</strong>（跨域 Export/API）。<br>
         <strong>映射：</strong>一域一服务 ↔ 一 schema（<code>platform</code> 由 system-server 维护）。<br>
-        <strong>BPM：</strong>Flowable 表可放 <code>platform</code> 或 <code>bpm</code> schema，与 bpm-server 配置一致。<br>
+        <strong>BPM：</strong>X7 Flow 表可放 <code>platform</code> 或 <code>bpm</code> schema，与 bpm-server 配置一致。<br>
         <strong>外部系统：</strong>不设 <code>integration</code> 业务 schema；对接配置入 <code>rbs_cfg</code>，同步流水入 <code>rbs_log</code>，业务数据写入归属域 schema。
       </div>
     </div>
@@ -713,7 +725,7 @@
           <div class="gov-flow-lane-label">审批</div>
           <div class="gov-flow-steps">
             <span class="gov-pill">bpm-server · 工作流审批</span><span class="gov-chev">→</span>
-            <span class="gov-pill">Flowable</span><span class="gov-chev">→</span>
+            <span class="gov-pill">X7 Flow</span><span class="gov-chev">→</span>
             <span class="gov-pill">状态事件</span>
           </div>
         </div>
@@ -993,92 +1005,102 @@
 <div class="page">
   <header class="page-head">
     <div class="page-title">RBS 系统 · 部署架构图</div>
-    <div class="page-subtitle">阿里云 CDN/SLB → ECS · Docker Compose（Gateway · 平台 · BPM · Worker · 业务域）→ 托管中间件 · ELK 旁路</div>
+    <div class="page-subtitle">公网入口 → VPC · ECS（Compose）→ 托管中间件 → 观测 / BI 旁路</div>
+    <div class="page-design">设计意图：物理拓扑与运行时部署；<strong>进程清单</strong>见第 6 章，<strong>发布流水线</strong>见第 11 章，<strong>日志/指标采集</strong>见第 12 章。</div>
   </header>
 
-  <div class="layer blue mb16">
-    <div class="layer-header">🌐 阿里云 CDN · SLB 入口</div>
-    <div class="layer-body">
-      <div class="node nb"><div class="n-title">静态前端</div></div>
-      <div class="node nb"><div class="n-title">API 反向代理</div><div class="n-desc">→ Gateway</div></div>
+  <div class="layer blue mb12">
+    <div class="layer-header">① 公网入口</div>
+    <div class="layer-body h-flow" style="width:100%;flex-wrap:wrap;">
+      <div class="node nb"><div class="n-title">CDN</div><div class="n-desc">静态资源 · 回源 OSS</div></div>
+      <div class="h-arrow"></div>
+      <div class="node nb"><div class="n-title">SLB / ALB</div><div class="n-desc">HTTPS · 负载均衡</div></div>
+      <div class="h-arrow"></div>
+      <div class="node nb"><div class="n-title">gateway-server ×N</div><div class="n-desc">路由 · 鉴权透传（ECS 容器）</div></div>
     </div>
   </div>
 
   <div class="connector"><div class="arr"></div></div>
 
-  <div class="layer green mb16">
-    <div class="layer-header" style="background:#059669;">🟢 生产环境（阿里云 ECS · Docker Compose 编排）</div>
-    <div class="layer-body col">
-      <div class="inner-layer">
-        <div class="il-title">网关</div>
-        <div class="row">
-          <div class="node ng"><div class="n-title">gateway-server ×N</div></div>
+  <div class="layer green mb12">
+    <div class="layer-header" style="background:#059669;">② VPC · ECS 计算区（Docker Compose · 非 K8s）</div>
+    <div class="layer-body col" style="align-items:stretch;gap:8px;">
+      <div class="inner-layer" style="border-color:#4F46E5;background:#EEF2FF;">
+        <div class="il-title" style="color:#4338CA;">平台基座</div>
+        <div class="row gap6" style="flex-wrap:wrap;">
+          <span class="tag tag-b">system-server ×N</span>
+          <span class="tag tag-b">bpm-server ×N</span>
+          <span class="tag tag-b">pay-server</span>
+          <span class="tag tag-o">portal/BFF（可选）</span>
         </div>
       </div>
-      <div class="inner-layer">
-        <div class="il-title">平台基座</div>
-        <div class="row">
-          <div class="node ni"><div class="n-title">system-server ×N</div><div class="n-desc">权限/字典/消息 · 文件/日志 · Job 定义</div></div>
-          <div class="node ni"><div class="n-title">bpm-server ×N</div><div class="n-desc">工作流与审批 · Flowable · 可水平扩展</div></div>
-          <div class="node ni"><div class="n-title">pay-server</div><div class="n-desc">支付渠道 · 按需；业务核销归财经域</div></div>
-          <div class="node nc w100" style="opacity:.85"><div class="n-title">portal/BFF（可选）</div><div class="n-desc">角色工作台聚合 · 主页缓存 BFF · 禁止直连他域 DB</div></div>
+      <div class="inner-layer" style="border-color:#10B981;background:#F0FDF9;">
+        <div class="il-title" style="color:#059669;">七大业务域（各域独立 Compose 服务 · 见第 6 章）</div>
+        <div class="row gap6" style="flex-wrap:wrap;justify-content:center;">
+          <span class="tag tag-g">rbs-customer</span>
+          <span class="tag tag-g">rbs-opportunity</span>
+          <span class="tag tag-g">rbs-sales</span>
+          <span class="tag tag-g">rbs-delivery</span>
+          <span class="tag tag-g">rbs-risk</span>
+          <span class="tag tag-g">rbs-finance</span>
+          <span class="tag tag-g">rbs-insurance</span>
         </div>
       </div>
       <div class="inner-layer" style="border-color:#D97706;background:#FFFBEB;">
-        <div class="il-title" style="color:#B45309;">异步任务（横切 · 详见第5章）</div>
-        <div class="row">
-          <div class="node no"><div class="n-title">xxl-job-admin</div><div class="n-desc">Cron · 调度发布</div></div>
-          <div class="node no"><div class="n-title">rbs-job-worker-server ×N</div><div class="n-desc">Job 执行 · 可扩容</div></div>
+        <div class="il-title" style="color:#B45309;">异步任务（第 5 章）</div>
+        <div class="row gap8">
+          <span class="tag tag-p">xxl-job-admin</span>
+          <span class="tag tag-p">rbs-job-worker-server ×N</span>
         </div>
       </div>
-      <div class="inner-layer">
-        <div class="il-title">RBS 业务服务</div>
-        <div class="row">
-          <div class="node ng"><div class="n-title">各业务域服务 ×N</div><div class="n-desc">按域独立容器 · compose 扩容</div></div>
-        </div>
-      </div>
-      <div class="inner-layer">
-        <div class="il-title">阿里云托管中间件</div>
-        <div class="row">
-          <div class="node ngr"><div class="n-title">RDS · rbs_cfg</div><div class="n-desc">配置库</div></div>
-          <div class="node ngr"><div class="n-title">RDS · rbs_data</div><div class="n-desc">业务库 · schema 分域</div></div>
-          <div class="node ngr"><div class="n-title">RDS · rbs_log</div><div class="n-desc">日志库</div></div>
-          <div class="node ngr"><div class="n-title">RDS · rbs_stats</div><div class="n-desc">统计库</div></div>
-          <div class="node ngr"><div class="n-title">云 Redis</div></div>
-          <div class="node ngr"><div class="n-title">Nacos（自建或 MSE）</div></div>
-          <div class="node ngr"><div class="n-title">RabbitMQ</div></div>
-        </div>
-      </div>
-      <div class="inner-layer" style="border-color:#0369a1;background:#F0F9FF;">
-        <div class="il-title" style="color:#0369a1;">企业集成（横切 · 非业务域）</div>
-        <div class="row">
-          <div class="node nt flex1"><div class="n-title">rbs-integration-*</div><div class="n-desc">CRM/ERP/企微/支付/物联网 · 适配器 jar</div></div>
-          <div class="node nt flex1"><div class="n-title">同步 / 对账 Job</div><div class="n-desc">rbs-job-worker · 非独立业务库</div></div>
-        </div>
-      </div>
-      <div class="inner-layer">
-        <div class="il-title">分析与 BI（非 Java 微服务）</div>
-        <div class="row">
-          <div class="node ngr"><div class="n-title">DataEase</div><div class="n-desc">报表/大屏 · PG 只读副本 · 独立容器</div></div>
-        </div>
+      <div class="ref-box" style="margin:0;font-size:10px;text-align:left;">
+        <strong>企业集成：</strong><code>rbs-integration-*</code> 为<strong>适配器 jar</strong>，随 Worker / 业务域容器加载，<strong>无独立 integration-server</strong>；同步/对账走 job-worker。
       </div>
     </div>
   </div>
 
-  <div class="layer gray mb0">
-    <div class="layer-header">📊 运维旁路</div>
-    <div class="layer-body">
-      <div class="node ngr flex1"><div class="n-title">ELK</div><div class="n-desc">日志汇聚</div></div>
-      <div class="node ngr flex1"><div class="n-title">Prometheus</div><div class="n-desc">Micrometer 指标</div></div>
-      <div class="node ngr flex1"><div class="n-title">Actuator</div><div class="n-desc">健康检查 · 端点</div></div>
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="layer purple mb12">
+    <div class="layer-header">③ 阿里云托管中间件（非 ECS 容器进程）</div>
+    <div class="layer-body" style="flex-wrap:wrap;">
+      <div class="node np"><div class="n-title">RDS · rbs_cfg</div><div class="n-desc">配置库</div></div>
+      <div class="node np"><div class="n-title">RDS · rbs_data</div><div class="n-desc">业务库 · schema 分域</div></div>
+      <div class="node np"><div class="n-title">RDS · rbs_log</div><div class="n-desc">日志库</div></div>
+      <div class="node np"><div class="n-title">RDS · rbs_stats</div><div class="n-desc">统计库</div></div>
+      <div class="node np"><div class="n-title">云 Redis</div></div>
+      <div class="node np"><div class="n-title">RabbitMQ</div></div>
+      <div class="node np"><div class="n-title">Nacos</div><div class="n-desc">自建或 MSE · 注册/配置</div></div>
+      <div class="node np"><div class="n-title">OSS</div><div class="n-desc">静态资源 · 文件存储</div></div>
     </div>
   </div>
 
-  <div class="ref-box">
-    <strong>开发环境：</strong><code>mvn package -Pboot</code> → <code>java -jar platform-server.jar</code> 单体联调；亦可本地 <code>docker compose</code> 起依赖与中台服务。<br>
-    <strong>生产：</strong>阿里云 <strong>ECS</strong> 宿主机 · <code>docker compose</code> 编排（非 ACK/K8s）· <code>-Pcloud</code> 构建镜像 · 各服务独立容器（含 bpm、job-worker）· Nacos（自建或 MSE） 注册 · 基线参考 <code>platform-server/docker-compose.yml</code>。
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="row stretch gap12 mb12">
+    <div class="layer gray flex1" style="border-style:dashed;">
+      <div class="layer-header">④ 观测旁路</div>
+      <div class="layer-body col">
+        <div class="node ngr w100"><div class="n-title">ELK</div><div class="n-desc">各 Java 容器日志采集（第 12 章）</div></div>
+        <div class="node ngr w100"><div class="n-title">Prometheus</div><div class="n-desc">Micrometer 指标 · 大盘告警</div></div>
+      </div>
+    </div>
+    <div class="layer indigo flex1">
+      <div class="layer-header">分析与 BI</div>
+      <div class="layer-body col">
+        <div class="node ni w100"><div class="n-title">DataEase</div><div class="n-desc">独立容器 · PG 只读副本</div></div>
+        <div class="node ni w100"><div class="n-title">只读访问</div><div class="n-desc">读 data/stats · 不写主库</div></div>
+      </div>
+    </div>
   </div>
+
+  <div class="ref-box mb0" style="text-align:left;">
+    <strong>开发联调：</strong><code>mvn package -Pboot</code> → <code>platform-server.jar</code> 单体；依赖可用本地 <code>docker compose</code>。<br>
+    <strong>生产发布：</strong>ECS + <code>compose pull &amp; up -d</code> · <code>-Pcloud</code> 镜像 · 分批次：先 system/bpm → 再各域（详见第 11 章）。健康探活：<code>/actuator/health</code>（第 12 章）。
+  </div>
+
 </div>
+
 
 <!-- ===================== 9. 安全架构 ===================== -->
 <div class="page">
@@ -1120,7 +1142,7 @@
   <div class="layer red mb0">
     <div class="layer-header">🔐 企微 SSO（统一入口）</div>
     <div class="layer-body">
-      <div class="node nr w100"><div class="n-title">WeCom OAuth2 → system 换发 JWT → Gateway 校验 → 下游透传 userId / tenantId / companyId</div></div>
+      <div class="node nr w100"><div class="n-title">WeCom OAuth2 → system 换发 JWT → Gateway 校验 → 下游透传 userId / companyId</div></div>
     </div>
   </div>
 </div>
@@ -1202,55 +1224,93 @@
 <div class="page">
   <header class="page-head">
     <div class="page-title">RBS 系统 · 可观测性架构图</div>
-    <div class="page-subtitle">日志 · 指标 · 业务预警</div>
+    <div class="page-subtitle">采集（链路 / 日志 / 指标）→ 汇聚（ELK / 大盘）→ 告警（平台 + 业务）</div>
+    <div class="page-design">设计意图：按可观测性三信号组织；<strong>平台观测告警</strong>与<strong>业务领域预警</strong>分轨，避免与第 5 章 Job、第 8 章部署 ELK 重复展开。</div>
   </header>
 
-  <div class="row stretch gap16 mb16">
-    <div class="layer blue flex1">
-      <div class="layer-header">请求关联</div>
-      <div class="layer-body col">
-        <div class="node nb w100"><div class="n-title">Gateway X-Request-Id</div><div class="n-desc">透传 MDC · ELK 按 requestId 检索全链路日志</div></div>
+  <div class="layer blue mb12">
+    <div class="layer-header">① 采集 · 三信号（Metrics / Logs / Traces）</div>
+    <div class="layer-body row stretch gap12" style="align-items:stretch;">
+      <div class="inner-layer flex1" style="min-width:0;border-color:#4F46E5;background:#EEF2FF;">
+        <div class="il-title" style="color:#4338CA;">指标 Metrics</div>
+        <div class="row gap6" style="flex-wrap:wrap;justify-content:center;">
+          <span class="chip ci-sale" style="background:#6366F1;">JVM / CPU</span>
+          <span class="chip ci-sale" style="background:#6366F1;">QPS / 错误率</span>
+          <span class="chip ci-sale" style="background:#6366F1;">MQ 堆积</span>
+          <span class="chip ci-sale" style="background:#6366F1;">Nacos 健康</span>
+        </div>
+        <div style="font-size:9px;color:#64748B;margin-top:6px;text-align:center;">Actuator 暴露 · 监控大盘采集</div>
       </div>
-    </div>
-    <div class="layer gray flex1">
-      <div class="layer-header">日志</div>
-      <div class="layer-body col">
-        <div class="node ngr w100"><div class="n-title">JSON 日志 → ELK</div><div class="n-desc">system-server API 访问/错误日志</div></div>
+      <div class="inner-layer flex1" style="min-width:0;border-color:#64748B;background:#F8FAFC;">
+        <div class="il-title" style="color:#475569;">日志 Logs</div>
+        <div class="node ngr w100" style="margin:4px auto;max-width:220px;"><div class="n-title">JSON 结构化</div><div class="n-desc">访问 / 错误 / 关键业务节点</div></div>
       </div>
-    </div>
-    <div class="layer orange flex1">
-      <div class="layer-header">业务预警</div>
-      <div class="layer-body col">
-        <div class="node no w100"><div class="n-title">风控预警 · 审批超时 · 回款逾期</div><div class="n-desc">→ MQ → 企微推送</div></div>
+      <div class="inner-layer flex1" style="min-width:0;border-color:#2B7DE9;background:#EFF6FF;">
+        <div class="il-title" style="color:#1D4ED8;">链路 Traces</div>
+        <div class="node nb w100" style="margin:4px auto;max-width:220px;"><div class="n-title">X-Request-Id</div><div class="n-desc">Gateway 生成 · MDC 透传</div></div>
       </div>
     </div>
   </div>
 
-  <div class="layer indigo mb0">
-    <div class="layer-header">监控大盘</div>
-    <div class="layer-body">
-      <div class="node ni"><div class="n-title">JVM / CPU / QPS</div></div>
-      <div class="node ni"><div class="n-title">PostgreSQL 慢查询</div><div class="n-desc">pg_stat_statements</div></div>
-      <div class="node ni"><div class="n-title">MQ 堆积</div></div>
-      <div class="node ni"><div class="n-title">Nacos 健康</div></div>
-    </div>
-  </div>
+  <div class="connector"><div class="arr"></div></div>
+
   <div class="layer gray mb12">
-    <div class="layer-header">与现有平台模块关系</div>
-    <div class="layer-body col" style="align-items:stretch;">
-      <div class="ref-box" style="margin:0;text-align:left;">
-        <strong>现状：</strong>存量单体平台 + OA/HRM 等遗留模块并行运行；目标态见下文。<br>
-        <strong>目标：</strong>本册 <code>rbs-*-server</code> 七大域分阶段落地（见第6章进程全景）。<br>
-        <strong>模块映射：</strong>crm → 客户/商机域 · erp/wms → 销售/交付域 · <code>rbs-module-pay</code> 渠道能力 → pay-server（按需）或合入财经域；<strong>收款/核销/开票归财经域</strong>。<br>
-        <strong>原则：</strong>按领域边界新建域模块；<strong>外部对接</strong>走 integration 适配层，不设集成业务域。
+    <div class="layer-header">② 汇聚 · 统一检索与大盘</div>
+    <div class="fc-pipeline mb0" style="margin-bottom:0;">
+      <div class="fc-step ngr"><div class="n-title">ELK</div><div class="n-desc">日志集中<br>按 requestId 串链路</div></div>
+      <div class="flow-h blue"><div class="fh-label">+</div><div class="fh-tip"></div></div>
+      <div class="fc-step ni"><div class="n-title">监控大盘</div><div class="n-desc">JVM · QPS · MQ<br>实例与中间件</div></div>
+      <div class="flow-h purple"><div class="fh-label">专项</div><div class="fh-tip"></div></div>
+      <div class="fc-step np"><div class="n-title">慢查询</div><div class="n-desc">pg_stat_statements<br>RDS 慢日志 → ELK</div></div>
+      <div class="flow-h green"><div class="fh-label">+</div><div class="fh-tip"></div></div>
+      <div class="fc-step np"><div class="n-title">Job / XXL</div><div class="n-desc">实例 · 调度 · 执行器<br>（详见第 5 章）</div></div>
+    </div>
+    <div class="ref-box" style="margin:8px 0 0;text-align:left;font-size:10px;">
+      <strong>慢查询：</strong>按库/schema 统计 Top SQL · 执行 &gt; N ms → 触发<strong>观测告警</strong> · 支持日终 TOP N 巡检。
+    </div>
+  </div>
+
+  <div class="connector"><div class="arr"></div></div>
+
+  <div class="row stretch gap12 mb12">
+    <div class="layer orange flex1" style="border-color:#EA580C;">
+      <div class="layer-header">③ 观测告警（平台 / 基础设施）</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="node no w100"><div class="n-title">触发来源</div><div class="n-desc">指标阈值 · 日志错误突增 · 慢 SQL · /health DOWN · Job 失败</div></div>
+        <div class="node no w100"><div class="n-title">典型规则</div><div class="n-desc">CPU/内存 · 5xx/P99 · MQ 堆积 · Nacos 下线 · 慢查询 &gt; N ms</div></div>
+        <div class="node no w100"><div class="n-title">通知</div><div class="n-desc">监控规则 → 企微 / 短信</div></div>
+      </div>
+    </div>
+    <div class="layer orange flex1" style="border-color:#F59E0B;background:#FFFBEB;">
+      <div class="layer-header" style="background:#FEF3C7;color:#92400E;">④ 业务预警（领域事件）</div>
+      <div class="layer-body col" style="align-items:stretch;">
+        <div class="node no w100" style="border-color:#FCD34D;background:#FEF9C3;"><div class="n-title">触发来源</div><div class="n-desc">域内业务规则 · 非基础设施阈值</div></div>
+        <div class="node no w100" style="border-color:#FCD34D;background:#FEF9C3;"><div class="n-title">典型场景</div><div class="n-desc">风控预警 · 审批超时 · 回款逾期</div></div>
+        <div class="node no w100" style="border-color:#FCD34D;background:#FEF9C3;"><div class="n-title">通知</div><div class="n-desc">MQ 事件 → 企微</div></div>
+      </div>
+    </div>
+    <div class="layer cyan flex1">
+      <div class="layer-header">健康探活</div>
+      <div class="layer-body col">
+        <div class="node nc w100"><div class="n-title">Actuator /health</div><div class="n-desc">SLB / Compose 探活</div></div>
+        <div class="node nc w100"><div class="n-title">健康告警</div><div class="n-desc">DOWN → 观测告警（非业务预警）</div></div>
       </div>
     </div>
   </div>
 
-  <div class="ref-box" style="margin-top:16px;">
-    <strong>文档修订：</strong> v1.6 · 2026-05-18 · 七大业务域；企业集成改为横切（非域）
+  <div class="layer green mb0">
+    <div class="layer-header">观测覆盖 · 进程范围</div>
+    <div class="layer-body" style="flex-wrap:wrap;justify-content:center;gap:8px;">
+      <span class="tag tag-b">gateway-server</span>
+      <span class="tag tag-b">system-server</span>
+      <span class="tag tag-b">bpm-server</span>
+      <span class="tag tag-g">rbs-*-server（七大域）</span>
+      <span class="tag tag-p">rbs-job-worker-server</span>
+      <span class="tag tag-p">xxl-job-admin</span>
+    </div>
   </div>
 </div>
+
 
 </body>
 </html>
